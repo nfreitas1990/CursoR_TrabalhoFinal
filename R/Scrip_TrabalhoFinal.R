@@ -88,29 +88,48 @@ meu_tema <- theme(legend.position = "none",
     
 # --- RECEITA
 
+imdb_dinheiro <-   imdb %>% 
+                        select(titulo, receita_eua, receita, orcamento) %>%
+                        #drop_na(c(receita_eua, receita, orcamento)) %>% 
+                        separate(col = receita_eua,
+                                 into = c("moeda_rec_eua","receita_eua"),
+                                 sep = " ") %>%
+                        separate(col = receita,
+                                 into = c("moeda_rec","receita"),
+                                 sep = " ") %>%
+                        separate(col = orcamento,
+                                 into = c("moeda_orc","orcamento"),
+                                 sep = " ")
 
-imdb_receita$receita_eua <- as.double(imdb_receita$receita_eua) 
-imdb_receita
-        
-        imdb %>% 
-            select(titulo, receita_eua) %>%
-            drop_na(receita_eua) %>% 
-            separate(col = receita_eua,
-                     into = c("moeda","receita_eua"),
-                     sep = " ") %>%
-            arrange(desc(as.double(receita_eua)))
-                        
+# QUESTÃO 3: Tipos de Moedas - ---------------------------------------------------------
+# Liste todas as moedas que aparecem nas colunas `orcamento` e `receita`
+
+# Moeda - Receita EUA
+imdb_dinheiro %>% 
+    group_by(moeda_rec_eua) %>% 
+    drop_na(moeda_rec_eua) %>% 
+    summarise(moeda = table(moeda_rec_eua)) %>% 
+    arrange(desc(moeda))
+  
+ # Moeda - Receita
+ imdb_dinheiro %>% 
+     group_by(moeda_rec) %>% 
+     drop_na(moeda_rec) %>% 
+     summarise(moeda = table(moeda_rec)) %>% 
+     arrange(desc(moeda)) 
+ 
+ 
+ # Moeda - Orcamento 
+ imdb_dinheiro %>% 
+     group_by(moeda_orc) %>% 
+     drop_na(moeda_orc) %>% 
+     summarise(moeda = table(moeda_orc)) %>% 
+     arrange(desc(moeda))
+ 
+
+ 
+ 
    
-                 
-       
-    
-    
-    
-    
-    
-    
-    
-    
 # Acertando a tabela
 
 # Transformar a coluna data_lancamento em formato data 
