@@ -10,6 +10,8 @@ library(readr)
 library(lubridate)
 library(ggplot2)
 library(purrr)
+library(stringr)
+
 
 
 # Carregar os Dados
@@ -151,60 +153,49 @@ glimpse(imdb)   # data_lancamento: está como character
        
        
        
-       
+      # Resolvi criar nova base de dados para trabalhar o dinheiro pq quero apagar colunas das moedas e não quero perder o imdb original. Além disso, vou filtrar e excluir os filmes que não são em dolar, para não  transformar as moedas agora.
        
        
        imdb_lucrodolar <-   imdb %>% 
-                             #select(titulo, 
-                             #moeda_orcamento,orcamento, 
-                             #moeda_receita, receita, 
-                             #moeda_receita_eua,receita_eua) %>% 
-                             drop_na(orcamento) %>% 
-                             filter(moeda_orcamento == "$" & 
-                                      moeda_receita == "$"&
-                                      moeda_receita_eua == "$") 
+                               #select(titulo, 
+                               #moeda_orcamento,orcamento, 
+                               #moeda_receita, receita, 
+                               #moeda_receita_eua,receita_eua) %>% 
+                               drop_na(orcamento) %>% 
+                               filter(moeda_orcamento == "$" & 
+                                        moeda_receita == "$"&
+                                        moeda_receita_eua == "$") 
        
        
        # Comparar as duas receitas para ver se são a mesma coisa
-       # Não são a mesma coisa. 
+       # Não são a mesma coisa. E agora, qual usar? 
        table(imdb_lucrodolar$receita == imdb_lucrodolar$receita_eua) 
        
        
-       # Parece a "receita" é sempre maior do que a "receita_eua"
+       # Parece que a "receita" é sempre maior do que a "receita_eua"
        # Vou usar a "receita" que parece ser a receita total do filme
-       
+       # E assumir que a "receita_eua" é a receita somente no eua
        imdb_lucrodolar %>% 
-                       mutate(diferenca_receita = receita - receita_eua) %>% 
+                       mutate(diferenca_receita = receita - receita_eua) %>% # p inferir qual é a total
                        filter(diferenca_receita < 0) %>% 
                        view()
        
        
        # Criando coluna de lucro na base
-       # Colocando lucro para a escala de milhões
+       # Colocando lucro para a escala de milhões pq tem mto numero
        # Apagando a coluna das moedas, pois já filtramos para dolar ao criar imdb_lucrodolar
        
        imdb_lucrodolar <- imdb_lucrodolar %>% 
                                            mutate(lucro_dolar = receita - orcamento) %>% 
                                            mutate(lucro_mi = lucro_dolar/1000000) %>%
+                                           mutate(orcamento_mi = orcamento/1000000) %>% 
+                                           mutate(receita_mi = receita/1000000) %>% 
                                            select(- c(moeda_orcamento,moeda_receita,
                                                       moeda_receita_eua, receita_eua)) 
        
-#---
-# BASE DE DADOS
-  View(imdb_lucrodolar)  # para trabalhar com lucros em dolar       
-  View(imdb)             # base total
-  glimpse(imdb)       
-       
-       
-       
-       
-       
-       
-       
-       
-       
-
-# Identificar valores faltantes    
+ 
+  
+  # Identificar valores faltantes    
 
     for (i in 1:length(imdb)){
         resultado <- table(is.na(imdb[i]))
@@ -213,8 +204,17 @@ glimpse(imdb)   # data_lancamento: está como character
         "\n"
            }
     
-# Atenção colunas completas: id_filme | titulo | titulo_original | nota_imdb | num_avaliacao 
-#                            data_lancamento |genero | duracao
+# Atenção colunas completas somente: id_filme | titulo | titulo_original | nota_imdb | num_avaliacao 
+#                                    data_lancamento |genero | duracao       
+      
+  
+       #---
+       # BASE DE DADOS
+       View(imdb_lucrodolar)  # para trabalhar com lucros em dolar       
+       View(imdb)             # base total para trabalhar com notas e outras coisas
+       glimpse(imdb)       
+       
+       
 
 
 # GERAL -------------------------------------------------------------------
@@ -236,9 +236,122 @@ meu_tema <- theme(legend.position = "none",
 
 # ANALISE DESCRITIVA ------------------------------------------------------
 
-    colnames(imdb)
-    View(imdb_avaliacoes)
+# 82.094 titulos no banco de dados todo
+  n_distinct(imdb$titulo) 
+       
+# 7.220 títulos depois q filtrei os "NAs", dolar e os que tinham dolar na receita e orcamento para calcular o lucro com a mesma moeda.    
+ n_distinct(imdb_lucrodolar$titulo) 
 
+ # OBS: Achei q tivesse sobrado mais. Mas vi que o numero reduziu ainda mais devido a exclusão do NAs e quando eu selecionei os tinham receita e orcamento em dolar. Nao gostei. aff
+ 
+    
+#------------------------------
+#1. Qual o lucro de cada filme?
+#2. Quais filmes foram os mais lucrativos?
+     
+    # LISTAGEM DOS 20 FILMES MAIS LUCRATIVOS   
+       imdb_lucrodolar %>% 
+         select(titulo, lucro_mi) %>% 
+         arrange(desc(lucro_mi)) %>% 
+         slice_max(n=20, order_by = lucro_mi, with_ties = TRUE) %>% 
+          ggplot(aes(y = fct_reorder(titulo,lucro_mi,.desc = F), x = lucro_mi)) +  # reordenar(forcats)
+              geom_bar(stat = "identity", alpha = 1/2) +       #não contar os dados
+              xlab("Lucro (Milhões)")+
+              ylab ("Títulos")
+ 
+ 
+   # CONCLUSÃO: avatar e avengers foram os filmes mais lucrativos, lucraram mais de 2 bilhoes de dolares.
+   
+ 
+ 
+ 
+  
+#3. Filmes com orcamento alto foram sempre lucrativos?
+#RECEITA vs ORCAMENTO: Ao fazer esse grafico, alguns filmes tiverem orcamento bem alto, mas a receita não foi tão alta, eu queria ver se esses filmes ainda assim foram lucrativos 
+# Demorei mto para achar essa solução do "case_when" para diferenciar esses pontos no grafico. Ufa!
+  
+        imdb_lucrodolar %>% 
+            mutate(avaliacao = case_when(lucro_mi<=0 ~ "nao-lucrativo",
+                                         lucro_mi>0 ~"lucrativo")) %>%  
+                 
+            ggplot(aes(x = orcamento_mi, y = receita_mi, color = avaliacao)) +
+                geom_point() +
+                xlab("Orçamento (Milhões)")+
+                ylab ("Receita (Milhões)")+
+                scale_y_continuous(breaks=seq(0, 3000, 250))
+          
+         
+            
+
+        
+# 4. Qual tipo de filme produz o maior retorno financeiro?       
+       
+# Problemas: tive q colocar espaço depois da vírgula pq senao alguns generos ficavam com espaço na frente quando separavam, meu deus!!!! sofri para descobrir isso.. haha  
+       
+        
+        # Numero de filmes em cada categoria - Número de títulos por gênero
+         imdb_lucrodolar %>% 
+          mutate(split_generos = str_split(genero, "\\, ")) %>%  
+          unnest(split_generos) %>% 
+          group_by(split_generos) %>%
+          summarise(n_generos = n_distinct(titulo)) %>% 
+          ggplot(aes(y = fct_reorder(split_generos, n_generos, .desc= F) , x = n_generos)) +
+          geom_bar(stat = "identity", alpha = 1/2)
+        
+        # 4.1. Qual o gênero mais lucrativo?
+        # Generos mais lucrativos - Lucro médio por gênero
+        imdb_lucrodolar %>% 
+          mutate(split_generos = str_split(genero, "\\, ")) %>%  
+          unnest(split_generos) %>% 
+          group_by(split_generos) %>% 
+          summarise(media_lucro = mean(lucro_mi)) %>% 
+          arrange(desc(media_lucro)) %>% 
+          ggplot(aes(y = fct_reorder(split_generos, media_lucro, .desc= F) , x = media_lucro)) +
+          geom_bar(stat = "identity", alpha = 1/2)+
+          xlab("Lucro Médio (Milhões)")+
+          ylab ("Gêneros")
+          
+        # 4.2. Qual idioma mais lucrativo?
+        # Idioma mais lucrativos - Lucro médio por idioma
+        
+          
+        # CONCLUSÃO: Os 5 gêneros mais lucrativos: Animacao | Aventura | Ficcao | Acao | Fantasia 
+        #            Os 5 gêneros mais produzidos: Drama | Comédia | Acao | Crime | Aventura
+  
+        
+     
+       
+       
+# 5. Qual o cineastra com os filmes mais lucrativos (media de lucro do filmes do cara, poderar pela qunatidade)
+       
+       
+          #         - O retorno financeiro é proprocional ao investimento?
+          #         - Existe relação entre o retorno financeiro e a nota imdb?             
+         
+         
+
+   
+     
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+    
+       
+    
+       
+       
 # --- NOTA IMDB
 
     # Os 10 Filmes com MAIORES notas - sem considerar a diferenca no num_avalicoes
