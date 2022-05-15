@@ -289,36 +289,114 @@ meu_tema <- theme(legend.position = "none",
 # Problemas: tive q colocar espaço depois da vírgula pq senao alguns generos ficavam com espaço na frente quando separavam, meu deus!!!! sofri para descobrir isso.. haha  
        
         
-        # Numero de filmes em cada categoria - Número de títulos por gênero
-         imdb_lucrodolar %>% 
+#1      # Numero de filmes em cada categoria - Número de títulos por gênero
+        imdb_lucrodolar %>% 
           mutate(split_generos = str_split(genero, "\\, ")) %>%  
           unnest(split_generos) %>% 
           group_by(split_generos) %>%
           summarise(n_generos = n_distinct(titulo)) %>% 
           ggplot(aes(y = fct_reorder(split_generos, n_generos, .desc= F) , x = n_generos)) +
-          geom_bar(stat = "identity", alpha = 1/2)
-        
-        # 4.1. Qual o gênero mais lucrativo?
-        # Generos mais lucrativos - Lucro médio por gênero
-        imdb_lucrodolar %>% 
-          mutate(split_generos = str_split(genero, "\\, ")) %>%  
-          unnest(split_generos) %>% 
-          group_by(split_generos) %>% 
-          summarise(media_lucro = mean(lucro_mi)) %>% 
-          arrange(desc(media_lucro)) %>% 
-          ggplot(aes(y = fct_reorder(split_generos, media_lucro, .desc= F) , x = media_lucro)) +
-          geom_bar(stat = "identity", alpha = 1/2)+
+          geom_bar(stat = "identity", alpha = 1/2) +
           xlab("Lucro Médio (Milhões)")+
           ylab ("Gêneros")
+        
+         
+         
+         
+#2       # Generos mais lucrativos - Lucro médio por gênero
+         imdb_lucrodolar %>% 
+            mutate(split_generos = str_split(genero, "\\, ")) %>%  
+            unnest(split_generos) %>% 
+            group_by(split_generos) %>% 
+            summarise(media_lucro = mean(lucro_mi)) %>% 
+            arrange(desc(media_lucro)) %>% 
+            ggplot(aes(y = fct_reorder(split_generos, media_lucro, .desc= F) , x = media_lucro)) +
+            geom_bar(stat = "identity", alpha = 1/2)+
+            xlab("Lucro Médio (Milhões)")+
+            ylab ("Gêneros")
           
-        # 4.2. Qual idioma mais lucrativo?
+        
+        
+### ----- Pausa para salvar esse banco       
+          
+        # Para tentar trabalhar com o purrr sem fazer besteira na tabela q já funciona. rs
+        # não consegui não me repetir no código. Voltar depois aqui!  
+        imdb_lucrodolar_purr <- imdb_lucrodolar %>% 
+                                  mutate(genero = str_split(genero, "\\, "),
+                                         elenco = str_split(elenco, "\\, "),
+                                         idioma = str_split(idioma, "\\, "),
+                                         pais = str_split(pais,"\\, "),
+                                         direcao = str_split(direcao,"\\, "),
+                                         roteiro = str_split(roteiro,"\\, "))
+### ----   
+         
+       
+#3      # Mês mais lucrativo - lucro médio por mês                                
+        imdb_lucrodolar_purr %>% 
+          group_by(mes) %>% 
+          drop_na(mes) %>% 
+          summarise(media_lucro = mean(lucro_mi, na.rm = TRUE)) %>% 
+          ggplot(aes(y = media_lucro, x= mes)) +
+          geom_bar(stat = "identity", alpha = 1/2)+
+          xlab("Mês")+
+          ylab ("Lucro Médio (Milhões)")
+          
+         
+        # Mes mais lucrativo para cada gênero - 3 mais mais lucrativos
+        # 
+        imdb_lucrodolar_purr %>% 
+          select(titulo,mes,genero,lucro_mi, data_lancamento) %>%
+          unnest(genero) %>% 
+          group_by(genero, mes) %>% 
+          summarise(media_lucro = mean(lucro_mi, na.rm = TRUE)) %>% 
+          drop_na(mes) %>% 
+          filter(genero == "Animation"|genero == "Adventure"|genero == "Sci-Fi") %>% 
+          ggplot() +
+          geom_bar(aes(x = mes , y = media_lucro), stat = "Identity")+
+          facet_grid(. ~genero, scales = "free_y")
+        
+          
+# 4     # Qual idioma mais lucrativo?
         # Idioma mais lucrativos - Lucro médio por idioma
+       
+        imdb_lucrodolar_purr %>%
+          unnest(idioma) %>%
+          group_by(idioma) %>%
+          drop_na(idioma) %>% 
+          summarise(sum_lucro = sum(lucro_mi, na.rm = TRUE)) %>%
+          arrange(desc(sum_lucro)) %>%
+          slice_max(n=5, order_by = sum_lucro, with_ties = TRUE) %>% 
+          
+          ggplot(aes(y = fct_reorder(idioma, sum_lucro, .desc= F) , x = sum_lucro)) +
+          geom_bar(stat = "identity", alpha = 1/2)+
+          xlab("Lucro (Milhões)")+
+          ylab ("Idioma")
+        
+
+          
+# 5     # Qual é a média de duração dos filmes que foram mais lucrativos?
+        # Selecionar os filmes com mais de 10% de lucro
+          
+        
+        imdb_lucrodolar_purr %>%
+          select(titulo, duracao, lucro_mi, orcamento_mi) %>%   
+          filter(lucro_mi >= orcamento_mi * 0.1) %>%
+          arrange(desc(lucro_mi)) %>% 
+          slice_max( n= 20, lucro_mi) %>% 
+          summarise(media_duracao= mean(duracao)) 
+          
+
+        # duracao media dos 20 filmes mais lucrativos: 137min
+        # duracao media dos filmes que lucraram mais de 10%: 109min
+        
         
           
-        # CONCLUSÃO: Os 5 gêneros mais lucrativos: Animacao | Aventura | Ficcao | Acao | Fantasia 
-        #            Os 5 gêneros mais produzidos: Drama | Comédia | Acao | Crime | Aventura
+        # CONCLUSÃO: 1. Os 5 gêneros mais lucrativos: Animacao | Aventura | Ficcao | Acao | Fantasia 
+        #            2. Os 5 gêneros mais produzidos: Drama | Comédia | Acao | Crime | Aventura
+        #            3. Dezembro e Janeiro foram os meses mais lucrativos
+        #            4. Os maiores lucros foram dos filmes em lingua Inglesa, Espanhola e Francesa     
   
-        
+         
      
        
        
