@@ -220,18 +220,18 @@ glimpse(imdb)   # data_lancamento: está como character
 # GERAL -------------------------------------------------------------------
 
 # Configurando o tema dos gráficos    
-meu_tema <- theme(legend.position = "none",
-                  axis.line.x = element_line(colour = "black"),
-                  axis.line.y = element_line(colour = "black"),
-                  
-                  axis.title = element_text(face = "bold", size = 16),
-                  axis.text.x = element_text(face = "plain", size=16),
-                  axis.text.y = element_text(face = "plain", size=16),
-                  
-                  axis.ticks = element_line(colour = "black", size = 0.2),
-                  
-                  panel.grid = element_blank(),
-                  panel.background = element_blank())
+  meu_tema <- theme(legend.position = "none",
+                      axis.line.x = element_line(colour = "gray"),
+                      axis.line.y = element_line(colour = "gray"),
+                      
+                      axis.title = element_text(face = "bold", size = 16),
+                      axis.text.x = element_text(face = "plain", size=12),
+                      axis.text.y = element_text(face = "plain", size=12),
+                      
+                      axis.ticks = element_line(colour = "gray", size = 0.2),
+                      
+                      panel.grid = element_blank(),
+                      panel.background = element_blank())
 
 
 # ANALISE DESCRITIVA ------------------------------------------------------
@@ -297,14 +297,18 @@ meu_tema <- theme(legend.position = "none",
           summarise(n_generos = n_distinct(titulo)) %>% 
           ggplot(aes(y = fct_reorder(split_generos, n_generos, .desc= F) , x = n_generos)) +
           geom_bar(stat = "identity", alpha = 1/2) +
+          scale_x_continuous(labels = scales::dollar)+
           xlab("Lucro Médio (Milhões)")+
-          ylab ("Gêneros")
+          ylab ("Gêneros")+
+          meu_tema
+        
         
          
          
-         
-#2       # Generos mais lucrativos - Lucro médio por gênero
-         imdb_lucrodolar %>% 
+#2      # Generos mais lucrativos - Lucro médio por gênero
+        
+        #lucro medio 
+        imdb_lucrodolar %>% 
             mutate(split_generos = str_split(genero, "\\, ")) %>%  
             unnest(split_generos) %>% 
             group_by(split_generos) %>% 
@@ -312,13 +316,73 @@ meu_tema <- theme(legend.position = "none",
             arrange(desc(media_lucro)) %>% 
             ggplot(aes(y = fct_reorder(split_generos, media_lucro, .desc= F) , x = media_lucro)) +
             geom_bar(stat = "identity", alpha = 1/2)+
+            scale_x_continuous(labels = scales::dollar)+
             xlab("Lucro Médio (Milhões)")+
-            ylab ("Gêneros")
+            ylab ("Gêneros")+
+            meu_tema
           
-        
-        
-### ----- Pausa para salvar esse banco       
           
+        #lucro total
+         imdb_lucrodolar %>% 
+           mutate(split_generos = str_split(genero, "\\, ")) %>%  
+           unnest(split_generos) %>% 
+           group_by(split_generos) %>% 
+           summarise(sum_lucro = sum(lucro_mi)) %>% 
+           ggplot(aes(y = fct_reorder(split_generos, sum_lucro, .desc= F) , x = sum_lucro)) +
+           geom_bar(stat= "Identity", alpha = 1/2)+
+           scale_x_continuous(labels = scales::dollar)+
+           xlab("Lucro Total (Milhões)")+
+           ylab ("Gêneros")+
+           meu_tema
+         
+         
+  #    
+  #       
+  #       
+  #          
+  ### ---- ### PAUSA ### ---- ###
+  # Treinando função para reduzir o codigo 
+
+# DUVIDA: Consigo fazer a função, mas ela não está geral o suficiente para ser usada em outros casos, como faço isso?       
+    
+  graf_lucro <- function(tabela, operacao = mean){
+                 if(operacao == "mean"){
+                   tabela %>% 
+                     mutate(split_generos = str_split(genero, "\\, ")) %>%  
+                     unnest(split_generos) %>% 
+                     group_by(split_generos) %>% 
+                     summarise(media_lucro = mean(lucro_mi)) %>% 
+                     arrange(desc(media_lucro)) %>% 
+                     ggplot(aes(y = fct_reorder(split_generos, media_lucro, .desc= F) , x = media_lucro)) +
+                     geom_bar(stat = "identity", alpha = 1/2)+
+                     xlab("Lucro Médio (Milhões)")+
+                     ylab ("Gêneros")
+                 } else if (operacao == "sum"){
+                   tabela %>% 
+                     mutate(split_generos = str_split(genero, "\\, ")) %>%  
+                     unnest(split_generos) %>% 
+                     group_by(split_generos) %>% 
+                     summarise(sum_lucro = sum(lucro_mi)) %>% 
+                     ggplot(aes(y = fct_reorder(split_generos, sum_lucro, .desc= F) , x = sum_lucro)) +
+                     geom_bar(stat= "Identity", alpha = 1/2)+
+                     xlab("Lucro (Milhões)")+
+                     ylab ("Gêneros")} else{
+                       print("só aceita a operação 'sum' ou 'mean'")
+                     }
+               }     
+  #    
+  #    
+  #    
+  #    
+  ### ---- ### FIM DA PAUSA ### ---- ###             
+         
+  #    
+  #       
+  #       
+  #          
+        ### ---- ### PAUSA ### ---- ###       
+        # para salvar esse banco       
+        #       
         # Para tentar trabalhar com o purrr sem fazer besteira na tabela q já funciona. rs
         # não consegui não me repetir no código. Voltar depois aqui!  
         imdb_lucrodolar_purr <- imdb_lucrodolar %>% 
@@ -328,8 +392,13 @@ meu_tema <- theme(legend.position = "none",
                                          pais = str_split(pais,"\\, "),
                                          direcao = str_split(direcao,"\\, "),
                                          roteiro = str_split(roteiro,"\\, "))
-### ----   
-         
+        #    
+        #    
+        #    
+        #    
+        ### ---- ### FIM DA PAUSA ### ---- ###       
+               
+        
        
 #3      # Mês mais lucrativo - lucro médio por mês                                
         imdb_lucrodolar_purr %>% 
@@ -338,24 +407,72 @@ meu_tema <- theme(legend.position = "none",
           summarise(media_lucro = mean(lucro_mi, na.rm = TRUE)) %>% 
           ggplot(aes(y = media_lucro, x= mes)) +
           geom_bar(stat = "identity", alpha = 1/2)+
+          scale_y_continuous(labels = scales::dollar)+
           xlab("Mês")+
-          ylab ("Lucro Médio (Milhões)")
+          ylab ("Lucro Médio (Milhões)")+
+          meu_tema
           
-         
-        # Mes mais lucrativo para cada gênero - 3 mais mais lucrativos
-        # 
-        imdb_lucrodolar_purr %>% 
-          select(titulo,mes,genero,lucro_mi, data_lancamento) %>%
-          unnest(genero) %>% 
-          group_by(genero, mes) %>% 
-          summarise(media_lucro = mean(lucro_mi, na.rm = TRUE)) %>% 
-          drop_na(mes) %>% 
-          filter(genero == "Animation"|genero == "Adventure"|genero == "Sci-Fi") %>% 
-          ggplot() +
-          geom_bar(aes(x = mes , y = media_lucro), stat = "Identity")+
-          facet_grid(. ~genero, scales = "free_y")
         
+        # Mês mais lucrativo dos gêneros mais lucrativo
+        # Não achei informativo
+        imdb_lucrodolar_purr %>% 
+          group_by(mes, genero) %>%
+          unnest(genero) %>% 
+          drop_na(mes) %>% 
+          summarise(media = mean(lucro_mi)) %>% 
+           filter(genero == "Animation"|
+                     genero == "Adventure"|
+                     genero == "Sci-Fi"|
+                     genero == "Fantasy") %>% 
+           ggplot(aes(y = media, x= mes, fill = genero, label = round(media,digits = 1))) +
+           geom_bar(stat = "identity")+
+            scale_fill_manual(values=c("#E62634",
+                                       "#009847",
+                                       "#EF9A03",
+                                       "#2A2961"))+
+           geom_label(position = position_stack (vjust = 0.5),alpha = 1/2, 
+                      colour = "lightgray", fontface = "bold", show_guide  = FALSE)+
+           coord_flip()+
+           xlab("Mês")+
+           ylab ("Lucro Médio (Milhões)") +
+           meu_tema+
+           theme(legend.position = "bottom")+
+           labs(fill = NULL)
+         
+        
+       
           
+        # Num. de filmes por mês por gênero
+        # generos mais lucrativos
+        imdb_lucrodolar_purr %>% 
+           group_by(mes, genero) %>%
+           unnest(genero) %>% 
+           drop_na(mes) %>% 
+           summarise(contagem = n()) %>% 
+           filter(genero == "Animation"|
+                  genero == "Adventure"|
+                  genero == "Sci-Fi"|
+                  genero == "Fantasy") %>% 
+           ggplot(aes(y = contagem, x= mes, fill = genero, label = contagem)) +
+           geom_bar(stat = "identity")+
+           scale_fill_manual(values=c("#E62634",
+                                      "#009847",
+                                      "#EF9A03",
+                                      "#2A2961"))+
+           geom_label(position = position_stack (vjust = 0.9),alpha = 1/2, 
+                      colour = "lightgray", fontface = "bold", show_guide  = FALSE)+
+           #coord_flip()+
+           scale_y_continuous(breaks=NULL)+
+           xlab("Mês")+
+           ylab ("Número de filmes") +
+          
+           meu_tema+
+           theme(legend.position = "bottom")+
+           labs(fill = NULL)
+           
+     
+         
+        
 # 4     # Qual idioma mais lucrativo?
         # Idioma mais lucrativos - Lucro médio por idioma
        
@@ -370,7 +487,9 @@ meu_tema <- theme(legend.position = "none",
           ggplot(aes(y = fct_reorder(idioma, sum_lucro, .desc= F) , x = sum_lucro)) +
           geom_bar(stat = "identity", alpha = 1/2)+
           xlab("Lucro (Milhões)")+
-          ylab ("Idioma")
+          ylab ("Idioma")+
+          scale_x_continuous(labels = scales::dollar)+
+          meu_tema
         
 
           
@@ -394,24 +513,158 @@ meu_tema <- theme(legend.position = "none",
         # CONCLUSÃO: 1. Os 5 gêneros mais lucrativos: Animacao | Aventura | Ficcao | Acao | Fantasia 
         #            2. Os 5 gêneros mais produzidos: Drama | Comédia | Acao | Crime | Aventura
         #            3. Dezembro e Janeiro foram os meses mais lucrativos
-        #            4. Os maiores lucros foram dos filmes em lingua Inglesa, Espanhola e Francesa     
+        #            4. Os maiores lucros foram dos filmes em lingua Inglesa, Espanhola e Francesa
+        #            5. Em média, os filmes mais lucrativos duram aproximadamente 2h e 20 min (137min)
   
-         
+
+        
+#5.     #Existe relação entre o retorno financeiro e a nota imdb?             
      
-       
-       
-# 5. Qual o cineastra com os filmes mais lucrativos (media de lucro do filmes do cara, poderar pela qunatidade)
-       
-       
-          #         - O retorno financeiro é proprocional ao investimento?
-          #         - Existe relação entre o retorno financeiro e a nota imdb?             
-         
-         
+        # DUVIDA: Nao consegui. Nem todas funções conseguem receber os dados do pipe?
+        #         Entao para análises, uso o pipe para a manipulação, salvo a tabela para rodar análise?
+        # imdb_lucrodolar %>%
+        #     summarise(cor.test(nota_imdb, lucro_mi, method="spearman"))    
+        # 
+        # Tentativa 2: 
+        # DUVIDA: Funciona, mas não consigo ver o p-valor
+        # imdb_lucrodolar %>%
+        #        summarise(r = cor (nota_imdb, lucro_mi, method="spearman"))
+          
+        
+        cor.test(imdb_lucrodolar$lucro_mi, imdb_lucrodolar$nota_imdb, method="spearman") #sem pressuposto
+        imdb_lucrodolar %>% 
+          ggplot(aes(x = nota_imdb, y = lucro_mi))+
+          geom_point(size=2, shape=16, stroke=2, alpha=1)+
+          geom_smooth(method="lm")
+          
+        
+# CONCLUSÃO: Não existe relação entre o lucro e a nota do imdb, como eu supunha inicial. Então, para o retorno financeiro nao interessa a nota recebida pelo público. Pois um filme bem avaliado pelo público não necessariamente teve otimo retorno financeiro.
+        
+
+#6        # Qual cineastra teve o maior retorno financeiro?
+          
+          imdb_lucrodolar_purr %>%
+            select(titulo, lucro_mi, direcao, genero) %>% 
+            unnest(direcao) %>% 
+            group_by(direcao) %>% 
+            summarise(med_lucro = mean(lucro_mi, na.rm = TRUE)) %>% 
+            arrange(desc(med_lucro)) %>% 
+            slice_max(n=10, med_lucro)
+            
+        
+          # Funcao para olhar os generos produzidos pelos 10 diretores q mais lucraram  
+            listar_gen <-  function (tabela, nome){
+              tabela %>% 
+                select(titulo, direcao, genero) %>% 
+                unnest(direcao) %>%
+                filter(direcao == "nome") %>% 
+                unnest(genero) 
+              }
+      
+            lista_direcao <- listar_gen(imdb_lucrodolar_purr,c("Jennifer Lee", "Anthony Russo","Joe Russo", "Josh Cooley","Pierre Coffin")) 
+            
+#Função nao funcionou, quando coloco o nome de todo mundo ele não retorna todos os filmes de cada diretor, some filme. não sei o q estou errando           
+ 
+      
+      
+      # Então vamos sem função
+      imdb_lucrodolar_purr %>% 
+        select(titulo, direcao, genero) %>%
+        unnest(direcao) %>%
+        filter(direcao == as.character("Jennifer Lee")|
+               direcao == as.character("Anthony Russo")|
+               direcao == as.character("Joe Russo")|
+               direcao == as.character("Josh Cooley")|
+               direcao == as.character("Pierre Coffin")) %>% 
+        unnest(genero) %>% 
+        group_by(direcao, genero) %>% 
+        summarise(contagem = length(genero)) %>%
+        
+        ggplot(aes(y= fct_reorder(direcao, genero),
+                   x= contagem, fill= genero, label= contagem))+
+          geom_bar(stat = "identity")+
+          scale_fill_brewer(palette="Spectral")+
+          xlab("Número de filmes por categoria")+
+          ylab ("Direção") + 
+          scale_x_continuous(breaks=NULL)+
+          geom_label(position = position_stack (vjust = 0.2),alpha = 0.65, 
+                 colour = "white", fontface = "bold", show_guide  = FALSE)+
+          meu_tema +
+          theme(legend.position = "bottom")+
+          labs(fill = NULL)
+      
+
+## Conclusão: Se quiser contratar alguem para fazer um filme dos 5 gêneros mais lucrativos (Animacao | Aventura | Ficcao | Acao | Fantasia). Poderia contratar um diretor que tenha tido uma boa média de lucro nos seus filmes:
+
+# Jennifer Lee - Frozen I e II
+# Anthony Russo - Avengers: Infinity War | Avengers: Endgame | Captain America: Civil War
+# Joe Russo -  Avengers: Infinity War | Avengers: Endgame | Captain America: Civil War
+# Josh Cooley - Toy Story 4
+# Pierre Coffin - Minions | Cattivissimo me (meu malvado favorito)
+# Jing Wu: Wolf Warrior 2  
+# Angus MacLane - Alla ricerca di Dory (procurando dori)
+# Lee Unkrich - Toy Story 3 | Alla ricerca di Nemo (procurando nemo)|Coco
+# James Cameron - Avatar | Titanic | True Lies| Terminator 2|The Abyss|Aliens|Terminator
+            
+ # Joe Russo e Anthony Russo são mais ecléticos, seus filmes se encaixam em diferentes categorias de filmes. Já Jennifer Lee, Josh Cooley e Pierre Coffin os filmes se encaiam em animação, comédia e aventura.          
+          
+     
 
    
+ # ---------------------------------
+      
+      # 1. Existe melhor data para lancamento? 
+      #    Qual o mês do ano com o maior númedo de filmes? E o dia do ano?
+
+      imdb %>% 
+        select(titulo, ano, data_lancamento) %>% 
+        separate(col = data_lancamento,
+                 into = c("ano","mes","dia"),
+                 sep = "-") %>%
+        group_by(mes) %>% 
+        filter(!is.na(mes)) %>% 
+        summarise(n_titulo = n_distinct(titulo, na.rm = TRUE)) %>% 
+        
+        ggplot() +
+        geom_col(aes( y = n_titulo, x = mes),
+                 colour = "orange", fill = "lightblue") +
+        scale_x_discrete (name="Mês") +
+        scale_y_continuous(name="Número de títulos") +
+        
+        labs(title = "Lançamento de Títulos")+
+        meu_tema
+      
+      
+      
+      imdb %>% 
+        select(titulo, ano, data_lancamento) %>% 
+        separate(col = data_lancamento,
+                 into = c("ano","mes","dia"),
+                 sep = "-") %>%
+        group_by(dia) %>% 
+        filter(!is.na(dia)) %>% 
+        summarise(n_titulo = n_distinct(titulo, na.rm = TRUE)) %>% 
+        
+        ggplot() +
+        geom_col(aes( y = n_titulo, x = dia),
+                 colour = "orange", fill = "lightblue") +
+        scale_x_discrete (name="Dias") +
+        scale_y_continuous(name="Número de títulos") +
+        meu_tema
      
-  
-  
+  # CONCLUSÃO: 
+  # 1. No meio do ano (de maio a agosto) temos uma baixa na quantidade de filmes lançados, sendo esse número maior no final do ano e começo. 
+  # 2. Os filmes são lancados, em geral, no primeiro dia do mês.
+      
+# LOGO, Deveriamos seguir a tendencia de lancar o filme no primeiro dia do mês, aproveitar o pagamento da galera, e evitar lançar nos meses de maio a agosto.
+      
+      
+      
+      
+      # 2. Como o cinestra pode ficar famoso?
+      #         - qual tipo de filme com maior numero de avaliações?
+      #         - qual tipo de filme com maior nota?
+      #         - qual o filme foi melhor aceito pela critica e pelo publico? 
   
   
   
@@ -445,53 +698,15 @@ meu_tema <- theme(legend.position = "none",
         arrange(desc(nota_imdb)) %>% 
         slice_min(n=10, order_by = nota_imdb, with_ties = TRUE)
     
-# --- RECEITA
-
-imdb_dinheiro <-   imdb %>% 
-                        select(titulo, receita_eua, receita, orcamento) %>%
-                        #drop_na(c(receita_eua, receita, orcamento)) %>% 
-                        separate(col = receita_eua,
-                                 into = c("moeda_rec_eua","receita_eua"),
-                                 sep = " ") %>%
-                        separate(col = receita,
-                                 into = c("moeda_rec","receita"),
-                                 sep = " ") %>%
-                        separate(col = orcamento,
-                                 into = c("moeda_orc","orcamento"),
-                                 sep = " ")
-
 
  
-   
-# Acertando a tabela
-
-# Transformar a coluna data_lancamento em formato data 
-    # Problema: Alguns filmes (4563) não tem a data completa, possuem somente o ano. 
-    # Estes filmes ficam como NA na data_lancamento quando transformamos para data
-
-    #imdb <- imdb %>% 
-     #   mutate(data_lancamento = ymd(data_lancamento))
-    
-
-
-
-
-
-# Descrição dados
-
-# Quantidades
-imdb %>% 
-    summarise(
-        across(.cols = c (id_filme, idioma),
-               .fns = n_distinct)
-    )
 
 
 
 
 
 
-# 1. Qual o mês do ano com o maior númedo de filmes? E o dia do ano?
+
 
     # 1. Selecionar algumas colunas para simplificar a visualização
     # 2. Extrair os dias e meses para coluna individual. 
@@ -501,41 +716,7 @@ imdb %>%
 
 
 
-imdb %>% 
-    select(titulo, ano, data_lancamento) %>% 
-    separate(col = data_lancamento,
-             into = c("ano","mes","dia"),
-             sep = "-") %>%
-    group_by(mes) %>% 
-    filter(!is.na(mes)) %>% 
-    summarise(n_titulo = n_distinct(titulo, na.rm = TRUE)) %>% 
-    
-    ggplot() +
-        geom_col(aes( y = n_titulo, x = mes),
-                 colour = "orange", fill = "lightblue") +
-        scale_x_discrete (name="Mês") +
-        scale_y_continuous(name="Número de títulos") +
-    
-        labs(title = "Lançamento de Títulos")+
-        meu_tema
 
-
-
-imdb %>% 
-    select(titulo, ano, data_lancamento) %>% 
-    separate(col = data_lancamento,
-             into = c("ano","mes","dia"),
-             sep = "-") %>%
-    group_by(dia) %>% 
-    filter(!is.na(dia)) %>% 
-    summarise(n_titulo = n_distinct(titulo, na.rm = TRUE)) %>% 
-    
-    ggplot() +
-        geom_col(aes( y = n_titulo, x = dia),
-                 colour = "orange", fill = "lightblue") +
-        scale_x_discrete (name="Dias") +
-        scale_y_continuous(name="Número de títulos") +
-        meu_tema
 
 
 
