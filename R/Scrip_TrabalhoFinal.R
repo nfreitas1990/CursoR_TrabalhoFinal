@@ -122,28 +122,42 @@ glimpse(imdb)   # data_lancamento: está como character
                    mutate(receita_eua = as.double(receita_eua)) 
        
       
-      # lucro: 
-       
-       
+      
 # QUESTÃO 3   # Liste todas as moedas que aparecem nas colunas `orcamento` e `receita 
               # Obj: Visualizar qnt de dados q vou deixar de fora ao considerar somente dolar
        
-       # Moeda - Receita EUA : 5 registros != dolar
+       # Moeda - Receita EUA : 5 registros != dolar e 70529 NAs
        imdb %>% 
          group_by(moeda_receita_eua) %>% 
          drop_na(moeda_receita_eua) %>% 
          summarise(moeda = table(moeda_receita_eua)) %>% 
          arrange(desc(moeda))
        
-       # Moeda - Receita: 61 registros != dolar
+       # Assisti a última aula e aprendi o count (). haha. 
+       # Vou deixar os dois para lembrar depois. =P
+       imdb %>% 
+         count(moeda_receita_eua)  
+         
+         
+       
+       # Moeda - Receita: 61 registros != dolar. 54839 NAs
        imdb %>% 
          group_by(moeda_receita) %>% 
          drop_na(moeda_receita) %>% 
          summarise(moeda = table(moeda_receita)) %>% 
          arrange(desc(moeda)) 
+       #ou
+       imdb %>% 
+         count(moeda_receita) 
        
        
-       # Moeda - Orcamento : 7108 registros != dolar  (ainda temos o dobro com moeda dolar, vou seguir, apesar de sair mtos filmes. Talvez eu volte e tente transformar as moedas para dólar depois)
+       # Moeda - Orcamento : 7108 registros != dolar  (vou seguir, apesar de sair mtos filmes.
+       # Acho que melhor seria tentar checar se a tabela orcamento e receita para cada observacao
+       # esta com a mesma moeda e depois converter essa moeda para dolar.
+       # E para os NAs,para não perder mtas observações, poderia olhar o pais do filme e inferir
+       # q a moeda é a mesma usada no país.
+       # Mas acho que vou perder mto tempo. Vou seguir assim, talvez possa voltar depois.
+       
        imdb %>% 
          group_by(moeda_orcamento) %>% 
          drop_na(moeda_orcamento) %>% 
@@ -151,9 +165,11 @@ glimpse(imdb)   # data_lancamento: está como character
          arrange(desc(moeda)) %>% 
          summarise(sum(moeda)-16602)    # soma da coluna moedas - (qnt do que é = dolar)
        
+       imdb %>% 
+         count(moeda_orcamento) %>% 
+         view()
        
-       
-      # Resolvi criar nova base de dados para trabalhar o dinheiro pq quero apagar colunas das moedas e não quero perder o imdb original. Além disso, vou filtrar e excluir os filmes que não são em dolar, para não  transformar as moedas agora.
+# Resolvi criar nova base de dados para trabalhar o dinheiro pq quero apagar colunas das moedas e não quero perder o imdb original. Além disso, vou filtrar e excluir os filmes que não são em dolar.
        
        
        imdb_lucrodolar <-   imdb %>% 
@@ -177,7 +193,7 @@ glimpse(imdb)   # data_lancamento: está como character
        # E assumir que a "receita_eua" é a receita somente no eua
        imdb_lucrodolar %>% 
                        mutate(diferenca_receita = receita - receita_eua) %>% # p inferir qual é a total
-                       filter(diferenca_receita < 0) %>% 
+                       filter(diferenca_receita < 0) %>%     #não retorna nenhuma observação
                        view()
        
        
@@ -193,9 +209,20 @@ glimpse(imdb)   # data_lancamento: está como character
                                            select(- c(moeda_orcamento,moeda_receita,
                                                       moeda_receita_eua, receita_eua)) 
        
- 
+       
+       
+                                           # versão reduzida - voltei reduzindo tudo. rs 
+                                             imdb_lucrodolar %>% 
+                                               mutate(lucro_dolar = receita - orcamento,
+                                                      lucro_mi = lucro_dolar/1000000,
+                                                      orcamento_mi = orcamento/1000000,
+                                                      receita_mi = receita/1000000) %>% 
+                                               select(- c(moeda_orcamento,moeda_receita,
+                                                          moeda_receita_eua, receita_eua)) %>% 
+                                               view()
   
-  # Identificar valores faltantes    
+  # Identificar valores faltantes
+  # Só para treinar                                           
 
     for (i in 1:length(imdb)){
         resultado <- table(is.na(imdb[i]))
@@ -238,7 +265,11 @@ glimpse(imdb)   # data_lancamento: está como character
 
 # 82.094 titulos no banco de dados todo
   n_distinct(imdb$titulo) 
-       
+
+#ou         
+  imdb %>% 
+    summarise(n_distinct(titulo))
+  
 # 7.220 títulos depois q filtrei os "NAs", dolar e os que tinham dolar na receita e orcamento para calcular o lucro com a mesma moeda.    
  n_distinct(imdb_lucrodolar$titulo) 
 
@@ -250,24 +281,25 @@ glimpse(imdb)   # data_lancamento: está como character
 #2. Quais filmes foram os mais lucrativos?
      
     # LISTAGEM DOS 20 FILMES MAIS LUCRATIVOS   
-       imdb_lucrodolar %>% 
-         select(titulo, lucro_mi) %>% 
-         arrange(desc(lucro_mi)) %>% 
-         slice_max(n=20, order_by = lucro_mi, with_ties = TRUE) %>% 
-          ggplot(aes(y = fct_reorder(titulo,lucro_mi,.desc = F), x = lucro_mi)) +  # reordenar(forcats)
-              geom_bar(stat = "identity", alpha = 1/2) +       #não contar os dados
-              xlab("Lucro (Milhões)")+
-              ylab ("Títulos")
+    imdb_lucrodolar %>% 
+      select(titulo_original, lucro_mi) %>% 
+      arrange(desc(lucro_mi)) %>% 
+      slice_max(n=20, order_by = lucro_mi, with_ties = TRUE) %>% 
+      ggplot(aes(y = fct_reorder(titulo_original,lucro_mi,.desc = F), x = lucro_mi)) +  # reordenar(forcats)
+        geom_bar(stat = "identity", alpha = 1/2) +       # stat para não contar os dados
+        xlab("Lucro (Milhões)")+
+        ylab ("Títulos")+
+        meu_tema
  
- 
-   # CONCLUSÃO: avatar e avengers foram os filmes mais lucrativos, lucraram mais de 2 bilhoes de dolares.
+# CONCLUSÃO: avatar e avengers foram os filmes mais lucrativos, lucraram mais de 2 bilhoes de dolares.
    
  
  
  
   
 #3. Filmes com orcamento alto foram sempre lucrativos?
-#RECEITA vs ORCAMENTO: Ao fazer esse grafico, alguns filmes tiverem orcamento bem alto, mas a receita não foi tão alta, eu queria ver se esses filmes ainda assim foram lucrativos 
+#RECEITA vs ORCAMENTO: Ao fazer esse grafico, alguns filmes tiverem orcamento bem alto, mas a receita não foi tão alta. Criei essa coluna "lucrativo/ não lucrativo" para ver se esses filmes (com orcamento e receita não tão alta) ainda assim foram lucrativos. 
+
 # Demorei mto para achar essa solução do "case_when" para diferenciar esses pontos no grafico. Ufa!
   
         imdb_lucrodolar %>% 
@@ -278,15 +310,17 @@ glimpse(imdb)   # data_lancamento: está como character
                 geom_point() +
                 xlab("Orçamento (Milhões)")+
                 ylab ("Receita (Milhões)")+
-                scale_y_continuous(breaks=seq(0, 3000, 250))
+                scale_y_continuous(breaks=seq(0, 3000, 250))+
+                meu_tema+
+                theme(legend.position = "top")
           
-         
+# CONCLUSÃO:Sim, os filmes com orçamento a partir de 200 Mi em receita, embora não tenha tido tanta receita quanto outros mais baratos, ainda assim se mantiveram lucrativo. Pode ter sido 1 dólar de lucro.. não vamos entrar nesse mérito. haha. Pensei em achar na net o quanto seria considerado um filme bem lucrativo, será que 10% do que foi investido? não sei. vou seguir sem essa info.      
             
 
         
 # 4. Qual tipo de filme produz o maior retorno financeiro?       
        
-# Problemas: tive q colocar espaço depois da vírgula pq senao alguns generos ficavam com espaço na frente quando separavam, meu deus!!!! sofri para descobrir isso.. haha  
+# Problemas: tive q colocar espaço depois da vírgula pq senao alguns generos ficavam com espaço na frente quando separavam, e depois davam como categorias diferentes! meu deus!!!! sofri para descobrir isso.. haha  
        
         
 #1      # Numero de filmes em cada categoria - Número de títulos por gênero
@@ -336,16 +370,16 @@ glimpse(imdb)   # data_lancamento: está como character
            meu_tema
          
          
-  #    
+  #  CONCLUSÃO: Abaixo  
   #       
   #       
   #          
-  ### ---- ### PAUSA ### ---- ###
+  ### ---- ### PAUSA 1 ### ---- ###
   # Treinando função para reduzir o codigo 
 
-# DUVIDA: Consigo fazer a função, mas ela não está geral o suficiente para ser usada em outros casos, como faço isso?       
+# DUVIDA: Consigo fazer a função, mas ela não está geral o suficiente para ser usada em outros casos, como faço isso?  Essa função só poderia ser usada aqui no meu codigo, é isso mesmo? Ou costumam fazer funções gerais?      
     
-  graf_lucro <- function(tabela, operacao = mean){
+  graf_lucro <- function(tabela, operacao = as.character(mean)){
                  if(operacao == "mean"){
                    tabela %>% 
                      mutate(split_generos = str_split(genero, "\\, ")) %>%  
@@ -356,7 +390,8 @@ glimpse(imdb)   # data_lancamento: está como character
                      ggplot(aes(y = fct_reorder(split_generos, media_lucro, .desc= F) , x = media_lucro)) +
                      geom_bar(stat = "identity", alpha = 1/2)+
                      xlab("Lucro Médio (Milhões)")+
-                     ylab ("Gêneros")
+                     ylab ("Gêneros")+
+                     meu_tema
                  } else if (operacao == "sum"){
                    tabela %>% 
                      mutate(split_generos = str_split(genero, "\\, ")) %>%  
@@ -366,21 +401,23 @@ glimpse(imdb)   # data_lancamento: está como character
                      ggplot(aes(y = fct_reorder(split_generos, sum_lucro, .desc= F) , x = sum_lucro)) +
                      geom_bar(stat= "Identity", alpha = 1/2)+
                      xlab("Lucro (Milhões)")+
-                     ylab ("Gêneros")} else{
+                     ylab ("Gêneros")+
+                     meu_tema} else{
                        print("só aceita a operação 'sum' ou 'mean'")
                      }
                }     
+     
+      graf_lucro (imdb_lucrodolar, "mean") # lucro médio por gênero
+      graf_lucro (imdb_lucrodolar, "sum")  # lucro total por gênero
+      
   #    
-  #    
-  #    
-  #    
-  ### ---- ### FIM DA PAUSA ### ---- ###             
+  ### ---- ### FIM DA PAUSA 1 ### ---- ###             
          
   #    
   #       
   #       
   #          
-        ### ---- ### PAUSA ### ---- ###       
+        ### ---- ### PAUSA 2 ### ---- ###       
         # para salvar esse banco       
         #       
         # Para tentar trabalhar com o purrr sem fazer besteira na tabela q já funciona. rs
@@ -396,7 +433,7 @@ glimpse(imdb)   # data_lancamento: está como character
         #    
         #    
         #    
-        ### ---- ### FIM DA PAUSA ### ---- ###       
+        ### ---- ### FIM DA PAUSA 2 ### ---- ###       
                
         
        
@@ -438,10 +475,61 @@ glimpse(imdb)   # data_lancamento: está como character
            meu_tema+
            theme(legend.position = "bottom")+
            labs(fill = NULL)
-         
-        
-       
           
+     # CONCLUSÃO:Dezembro: todos os gêneros tiveram o lucro médio alto (>150Mi)    
+     #                     Sci-Fi Melhor mes foi de Abril até Julho e o mes de  Dezembro
+     #                     Fantasia melhor mês: Novembro, Dezembro e Janeiro.
+     #                     Animação: Agosto
+     #                     Aventura: foi bom ao longo do ano
+        
+    # Achei estranho essa média tão discrepante no mês de agosto para o gênero animação. Tentei procurar na net se existia algum festival de animação de cinema nesse período. Mas o festival famoso que ocorre desde 1960 parece q ocorre em junho. Então vou checar os dados.
+  
+        
+### ---- ### PAUSA 3 ### ---- ###
+  # Checar os dados da média alta
+        
+        # media total Animação deu 168
+        imdb_lucrodolar_purr %>%
+          unnest(genero) %>%
+          filter(genero == "Animation") %>% 
+          drop_na(lucro_mi) %>% 
+          summarise(mean(lucro_mi))   
+        
+        # media de agosto realmente deu alta
+        # Checar somente esse mes
+        # Lista dos filmes de animação do mes de agosto
+        imdb_lucrodolar_purr %>%
+          select(titulo_original, mes, lucro_mi, genero) %>% 
+          unnest(genero) %>%
+          filter(genero == "Animation" & mes == "08") %>% 
+          arrange(desc(lucro_mi)) %>%
+          head()
+          
+        # Neste mês temos 3 filmes (The Lion King, Minions, Despicable Me 3 ) que tiveram um dos lucros mais altos do gênero Animação
+        # 
+        # Os 20 filmes de Animação Mais Lucrativos
+        imdb_lucrodolar_purr %>% 
+          select(titulo_original, lucro_mi, genero) %>% 
+          unnest(genero) %>%
+          filter(genero == "Animation") %>% 
+          arrange(desc(lucro_mi)) %>% 
+          slice_max(n=20, order_by = lucro_mi, with_ties = TRUE) %>% 
+          ggplot(aes(y = fct_reorder(titulo_original,lucro_mi,.desc = F), x = lucro_mi)) +  # reordenar(forcats)
+          geom_bar(stat = "identity", alpha = 1/2) +       # stat para não contar os dados
+          xlab("Lucro (Milhões)")+
+          ylab ("Títulos")+
+          scale_x_continuous(labels = scales::dollar)+
+          meu_tema
+  
+  # Senti falta de alguma coisa para comparar a lista dos meses de agosto, para saber se estes títulos estavam contidos na lista dos 20 mais lucrativos.   
+        
+  # CONCLUSÃO: Vou seguir com os dados. Talvez esses dois filmes tenham puxado a média desse mes para cima. Poderia recalcular a media sem eles para saber se mudaria mto, mas vou seguir.  
+        
+      ### ---- ### FIM DA PAUSA 3 ### ---- ###        
+        
+        
+        
+           
         # Num. de filmes por mês por gênero
         # generos mais lucrativos
         imdb_lucrodolar_purr %>% 
@@ -465,7 +553,7 @@ glimpse(imdb)   # data_lancamento: está como character
            scale_y_continuous(breaks=NULL)+
            xlab("Mês")+
            ylab ("Número de filmes") +
-          
+           
            meu_tema+
            theme(legend.position = "bottom")+
            labs(fill = NULL)
@@ -515,13 +603,19 @@ glimpse(imdb)   # data_lancamento: está como character
         #            3. Dezembro e Janeiro foram os meses mais lucrativos
         #            4. Os maiores lucros foram dos filmes em lingua Inglesa, Espanhola e Francesa
         #            5. Em média, os filmes mais lucrativos duram aproximadamente 2h e 20 min (137min)
-  
+        
+        # CONCLUSÃO dO MÊS: Dezembro: todos os gêneros tiveram o lucro médio alto (>150Mi)    
+        #                     Sci-Fi: Mes mais lucrativo foi de Abril até Julho e o mes de  Dezembro
+        #                     Fantasia: Novembro, Dezembro e Janeiro.
+        #                     Animação: Agosto (por conta dos filmes 3 filmes q estão entre os mais lucrativos do gênero)
+        #                     Aventura: foi bom ao longo do ano
 
         
 #5.     #Existe relação entre o retorno financeiro e a nota imdb?             
      
-        # DUVIDA: Nao consegui. Nem todas funções conseguem receber os dados do pipe?
-        #         Entao para análises, uso o pipe para a manipulação, salvo a tabela para rodar análise?
+        # DUVIDA: Nao consegui rodar esses códigos. Nem todas funções conseguem receber os dados do pipe?
+        #         Entao para análises, não consigo usar o pipe? tenho que usar o pipe para a manipulação, salvar a saída para rodar análise?
+        
         # imdb_lucrodolar %>%
         #     summarise(cor.test(nota_imdb, lucro_mi, method="spearman"))    
         # 
@@ -530,7 +624,7 @@ glimpse(imdb)   # data_lancamento: está como character
         # imdb_lucrodolar %>%
         #        summarise(r = cor (nota_imdb, lucro_mi, method="spearman"))
           
-        
+        # voltei para o jeito velho. rs
         cor.test(imdb_lucrodolar$lucro_mi, imdb_lucrodolar$nota_imdb, method="spearman") #sem pressuposto
         imdb_lucrodolar %>% 
           ggplot(aes(x = nota_imdb, y = lucro_mi))+
@@ -561,7 +655,7 @@ glimpse(imdb)   # data_lancamento: está como character
                 unnest(genero) 
               }
       
-            lista_direcao <- listar_gen(imdb_lucrodolar_purr,c("Jennifer Lee", "Anthony Russo","Joe Russo", "Josh Cooley","Pierre Coffin")) 
+  lista_direcao <- listar_gen(imdb_lucrodolar_purr,c("Jennifer Lee", "Anthony Russo","Joe Russo", "Josh Cooley","Pierre Coffin")) 
             
 #Função nao funcionou, quando coloco o nome de todo mundo ele não retorna todos os filmes de cada diretor, some filme. não sei o q estou errando           
  
@@ -613,8 +707,8 @@ glimpse(imdb)   # data_lancamento: está como character
    
  # ---------------------------------
       
-      # 1. Existe melhor data para lancamento? 
-      #    Qual o mês do ano com o maior númedo de filmes? E o dia do ano?
+      #  Existe melhor data para lancamento? 
+#QUESTÃO 1.    Qual o mês do ano com o maior númedo de filmes? E o dia do ano?
 
       imdb %>% 
         select(titulo, ano, data_lancamento) %>% 
@@ -661,7 +755,10 @@ glimpse(imdb)   # data_lancamento: está como character
 # LOGO, Deveriamos seguir a tendencia de lancar o filme no primeiro dia do mês, aproveitar o pagamento da galera, e evitar lançar nos meses de maio a agosto.
       
       
+ 
       
+      
+          
       
       # 2. Como o cinestra pode ficar famoso?
       #         - qual tipo de filme com maior numero de avaliações?
