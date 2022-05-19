@@ -651,9 +651,11 @@ glimpse(imdb)   # data_lancamento: está como character
         scale_x_discrete (name="Dias") +
         scale_y_continuous(name="Número de títulos") +
         meu_tema
-     
+      
+      
+      
   # CONCLUSÃO: 
-  # 1. No meio do ano (de maio a agosto) temos uma baixa na quantidade de filmes lançados, sendo esse número maior no final do ano e começo. 
+  # 1. No meio do ano (de maio a agosto) temos uma baixa na quantidade de filmes lançados.O número de filmes lançados é  maior no final do ano e começo. 
   # 2. Os filmes são lancados, em geral, no primeiro dia do mês.
       
 # LOGO, Deveriamos seguir a tendencia de lancar o filme no primeiro dia do mês, aproveitar o pagamento da galera, e evitar lançar nos meses de maio a agosto.
@@ -668,9 +670,41 @@ glimpse(imdb)   # data_lancamento: está como character
   
   
   
+# --- NOTA IMDB  
+  
+  # O cinema se estabeleceu enquanto arte no sec. XX, principalmente a partir da segunda metade do século. Antes deste período temos filmes com padrões mto diferentes dos atuais. Vou quebrar a base de dados em duas antes e apos 1990, para facilitar visualização tb.
+      
+  # Fitrar a partir de 1990 que tem mais de 1000 avaliações 
+  # Acima de 1000 avalições pq tem uns filmes com apenas 100 avaliações ou menos    
+  imdb_1990 <-   imdb %>%
+                       #filter(year(data_lancamento) > 1990) %>% 
+                       filter(num_avaliacoes > 1000 &
+                                year(data_lancamento) > 1990)
+  imdb_antes1990 <-   imdb %>%
+                        filter(year(data_lancamento) < 1990 &
+                               num_avaliacoes > 1000)
+                        
+                        
+      
+   
   
   
   
+  
+  # Média do num avaliação por ano
+      imdb_1990 %>%
+        select(titulo, ano, num_avaliacoes, data_lancamento) %>% 
+        group_by(ano) %>% 
+        drop_na(year(data_lancamento)) %>% 
+        summarise(media = mean(num_avaliacoes)) %>% 
+           ggplot()+
+           geom_bar(aes(year(data_lancamento, media), stat = "Identity"))+
+        coord_flip()
+         
+  # Antes de 1990 a média do num de avaliações é baixo, com excecao de 1979, 1984, 1986.
+  # Antes de 1990 tem menos de 1000 filmes lancados no ano.Nos demais anos >1000 filmes  
+      
+        
   
   
   
@@ -683,14 +717,14 @@ glimpse(imdb)   # data_lancamento: está como character
     
        
        
-# --- NOTA IMDB
+
 
     # Os 10 Filmes com MAIORES notas - sem considerar a diferenca no num_avalicoes
     imdb %>% 
-        select(titulo, nota_imdb) %>% 
+        select(titulo, nota_imdb, ano, num_avaliacoes) %>% 
         arrange(desc(nota_imdb)) %>% 
-        slice_max(n=10, order_by = nota_imdb, with_ties = TRUE)
-    
+        #slice_max(n=10, order_by = nota_imdb, with_ties = TRUE)
+    view()
     
     # Os 10 Filmes com MENORES notas - sem considerar a diferenca no num_avalicoes
     imdb %>% 
