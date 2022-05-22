@@ -769,43 +769,303 @@ glimpse(imdb)   # data_lancamento: está como character
   
 # --- NOTA IMDB  
   
-  # O cinema se estabeleceu enquanto arte no sec. XX, principalmente a partir da segunda metade do século. Antes deste período temos filmes com padrões mto diferentes dos atuais. Vou quebrar a base de dados em duas antes e apos 1990, para facilitar visualização tb.
+  # O cinema se estabeleceu enquanto arte no sec. XX, principalmente a partir da segunda metade do século. Antes deste período temos filmes com padrões mto diferentes dos atuais. 
+  
+  # Pensei em duas opções
+  #   1. Quebrar a base de dados em duas: antes e apos 1990, para facilitar visualização.
+  #   2. Fazer análise por década. 
       
-  # Fitrar a partir de 1990 que tem mais de 1000 avaliações 
-  # Acima de 1000 avalições pq tem uns filmes com apenas 100 avaliações ou menos    
-  imdb_1990 <-   imdb %>%
-                       #filter(year(data_lancamento) > 1990) %>% 
-                       filter(num_avaliacoes > 1000 &
-                                year(data_lancamento) > 1990)
-  imdb_antes1990 <-   imdb %>%
-                        filter(year(data_lancamento) < 1990 &
-                               num_avaliacoes > 1000)
-                        
-                        
+  
+     # Optei por Decada 
+     # a coluna ano (factor) não funcionou dentro da função, mesmo eu transformando ela para numerica.
+     # então resolvi extrair o ano da data_lancamento (date)
+     # vou excluir 2 filmes que representavam sozinho a decada de 1890 e 1900, respectivamente.
       
+ extrair_decada <- function(ano) {return(ano - ano %% 10)}
+      
+ imdb_decada <-   imdb %>% 
+                    mutate(genero = str_split(genero, "\\, "),
+                           elenco = str_split(elenco, "\\, "),
+                           idioma = str_split(idioma, "\\, "),
+                           pais = str_split(pais,"\\, "),
+                           direcao = str_split(direcao,"\\, "),
+                           roteiro = str_split(roteiro,"\\, ")) %>% 
+                    mutate(ano = as.double(year(data_lancamento))) %>% 
+                    mutate(decada = extrair_decada(ano)) %>% 
+                    select(-c (moeda_orcamento,moeda_receita,moeda_receita_eua,orcamento,receita,receita_eua)) 
+ 
+ # Excluir generos com poucos filmes
+ imdb_decada <-  imdb_decada %>% 
+                   unnest(genero) %>% 
+                   filter(genero != "Documentary" &
+                          genero != "Reality-TV" &
+                          genero!= "News"&
+                          genero != "Adult") %>% 
+                   select(id_filme,titulo_original, decada,genero,data_lancamento, ano)
+
+ # Tabela nova
+ 
+ imdb_decada <- inner_join(imdb_decada, imdb_avaliacoes, by = "id_filme") 
    
+
+
+#1        Quais foram os filmes mais avaliados de todos os tempos?
+           
+          imdb_decada %>% 
+            nest(genero) %>% 
+            select(titulo_original, num_avaliacoes, nota_media_ponderada) %>%
+            arrange(desc(num_avaliacoes)) %>% 
+            slice_max(n=10, order_by = num_avaliacoes, with_ties = TRUE) %>% 
+            ggplot(aes(x = fct_reorder(titulo_original, num_avaliacoes, .desc = F),
+                       y = num_avaliacoes, label= num_avaliacoes))+
+              geom_bar(stat = "identity")+
+              coord_flip()+
+              xlab("Filmes")+
+              ylab ("Número de Avaliações") +
+              scale_y_continuous (breaks=NULL)+
+              geom_label(position = position_stack (vjust = 0.8),alpha = 0.65, 
+                         colour = "white", fontface = "bold", show_guide  = FALSE)+
+              meu_tema
+              
+             
+            #1.The Shawshank Redemption - um sonho de liberdade
+            #2.The Dark Knight - batman
+            #3.Inception - A origem
+            #4.Fight Club - Clube da luta
+            #5.Pulp Fiction
+            #6.Forrest Gump
+            #7. The Matrix                                              
+            #8. The Lord of the Rings: The Fellowship of the Ring  
+            #9. The Lord of the Rings: The Return of the King     
+            #10. The Godfather - poderoso chefão
+          
+
+#2        Quais foram os filmes com maior nota imdb?
+
+          imdb_decada %>%
+            nest(genero) %>% 
+            select(titulo_original, nota_media_ponderada, ano) %>% 
+            arrange(desc(nota_media_ponderada)) %>% 
+            slice_max(n=10, order_by = nota_media_ponderada, with_ties = TRUE) %>% 
+              ggplot(aes(x = fct_reorder(titulo_original, nota_media_ponderada, .desc = F),
+                       y = nota_media_ponderada, label= nota_media_ponderada))+
+            geom_bar(stat = "identity")+
+            coord_flip()+
+            xlab("Filmes")+
+            ylab ("Nota IMDB") +
+            scale_y_continuous (breaks=NULL)+
+            geom_label(position = position_stack (vjust = 0.9),alpha = 0.65, 
+                       colour = "white", fontface = "bold", show_guide  = FALSE)+
+            meu_tema
+ 
+#2.1        Quais foram os filmes com maior nota imdb por década?
+ 
+  graf_decada <- function(tab){
+                    tab %>%
+                      nest(genero) %>% 
+                      arrange(desc(nota_media_ponderada)) %>% 
+                      slice_max(n=10,order_by = nota_media_ponderada, with_ties = TRUE)%>% 
+                        
+                      ggplot()+
+                        aes(fct_reorder(titulo_original, nota_media_ponderada, .desc = F),
+                                        y = nota_media_ponderada, 
+                                        label = nota_media_ponderada )+
+                        geom_bar(stat = "identity")+
+                        coord_flip()+
+                        xlab("Filmes")+
+                        ylab ("Nota IMDB") +
+                        geom_label(position = position_stack (vjust = 0.9),alpha = 0.65, 
+                                    colour = "white", fontface = "bold", show_guide  = FALSE)+
+                        meu_tema+
+                        theme(legend.title = tab$decada)+
+                        scale_y_continuous (n.breaks = 10)
+                            
+                        }
+                        
+          
+          
+imdb_graf_decada <-   imdb_decada %>%
+                        drop_na(decada) %>%
+                        group_by(decada) %>%
+                        nest() %>% 
+                        filter(decada >1910) %>% 
+                        arrange(desc(decada)) %>% 
+                        mutate(
+                          grafico = map(data,graf_decada))
+#2020
+imdb_graf_decada %>%           
+      pluck('grafico', 1)
+#2010
+imdb_graf_decada %>%           
+  pluck('grafico', 2)
+
+#2000
+imdb_graf_decada %>%           
+  pluck('grafico', 3)
+
+#1990
+imdb_graf_decada %>%           
+  pluck('grafico', 4)
+
+
+#3       Quais os generos com maior nota imdb? 
+        
+  # 2020
+  imdb_decada %>%
+          drop_na(decada) %>%
+          filter(decada ==2020) %>% 
+          group_by(genero) %>% 
+ 
+ 
+        
   
-  
-  
-  
-  # Média do num avaliação por ano
-      imdb_1990 %>%
-        select(titulo, ano, num_avaliacoes, data_lancamento) %>% 
-        group_by(ano) %>% 
-        drop_na(year(data_lancamento)) %>% 
-        summarise(media = mean(num_avaliacoes)) %>% 
-           ggplot()+
-           geom_bar(aes(year(data_lancamento, media), stat = "Identity"))+
-        coord_flip()
+#3       
+ 
+ 
+#3.1     Quais os generos com maior nota imdb por decada?
+ 
+ 
+ 
+#4        Quais os generos com maior nota imdb por faixa etaria? 
+ 
+ 
+
+#5       Dos gêneros mais lucrativos, quais possuem as maiores notas imdb
+ 
+ 
+ 
+ #1        Quais os generos com maior média de nota imdb
+          
+          imdb_decada %>%
+            select(titulo_original, nota_imdb, decada, num_avaliacoes,genero) %>% 
+            filter(decada >=2000) %>% 
+            unnest(genero) %>% 
+            group_by(genero) %>% 
+             ggplot(aes(x = fct_reorder(genero, nota_imdb, .desc = F), y = nota_imdb))+
+               geom_boxplot()
+            
+          imdb_decada %>%
+            select(titulo_original, nota_imdb, decada, num_avaliacoes,genero) %>% 
+            filter(decada >=2000) %>% 
+            unnest(genero) %>%
+            count(genero) %>% 
+            view()
+             
+
+
+
+    # FILMES COM MAIORES NOTAS IMDB de todos os tempos (com mais de 1000 observações)
+      
+        
+                        
+    # MAIOR NOTA IMDB: 5 filmes com maior nota em cada decada - possibilidade de empate (com mais de 1000 observações)
+    
+       imdb_decada %>%
+         select(titulo_original, nota_imdb, decada, num_avaliacoes) %>%
+         drop_na(decada) %>% 
+         filter(decada >= 1910 & num_avaliacoes > 1000) %>% 
+         group_by(decada) %>%
+         slice_max(n=10, order_by = nota_imdb, with_ties = TRUE) %>% 
+         view()
          
-  # Antes de 1990 a média do num de avaliações é baixo, com excecao de 1979, 1984, 1986.
-  # Antes de 1990 tem menos de 1000 filmes lancados no ano.Nos demais anos >1000 filmes  
+    # Media IMDB por genero
+       imdb_decada %>%
+         select(titulo_original, nota_imdb, decada, num_avaliacoes, genero, ano) %>%
+         drop_na(decada) %>% 
+         filter(decada >= 1910 & num_avaliacoes > 1000) %>% 
+         unnest(genero) %>%
+         group_by(genero, ano) %>% 
+         filter(decada >= 2000) %>% 
+         summarise(media = mean(nota_imdb)) %>% 
+         arrange(desc(media)) %>% 
+          ggplot(aes(x = decada, y = media, color = genero))+
+         geom_line()+
+         geom_point()
+         view()
+       
+    # Media IMDB por decada dos gêneros mais lucrativos
+       imdb_decada %>%
+         select(titulo_original, nota_imdb, decada, num_avaliacoes, genero) %>%
+         drop_na(decada) %>% 
+         filter(decada >= 1910 & num_avaliacoes > 1000) %>% 
+         unnest(genero) %>%
+         group_by(decada, genero) %>%
+         summarise(media = mean(nota_imdb)) %>% 
+           ggplot(aes(x = decada, y = media, color = genero))+
+           geom_line()+
+           geom_point()
+         # 
+         # 
+         # slice_max(n=10, order_by = nota_imdb, with_ties = TRUE) %>% 
+          view()
+       
+       
+       
+          # Média do num avaliação por ano
+          
+          imdb_decada %>%
+            select(titulo, ano, num_avaliacoes, data_lancamento) %>% 
+            group_by(ano) %>% 
+            drop_na(year(data_lancamento)) %>% 
+            summarise(media = mean(num_avaliacoes)) %>% 
+            ggplot()+
+            geom_bar(aes(year(data_lancamento, media), stat = "Identity"))+
+            coord_flip() 
+       
+       
+         
+         
+ 
+       
+       
+       
+            
+ graf_pordecada <- function(tabela, decada_escolhida)  
+   
+    function(base, decada_escolhida) {
+                      base %>% 
+                        select(titulo_original, nota_imdb, decada, num_avaliacoes) %>%
+                        drop_na(decada) %>% 
+                        filter(decada >= 1910 & num_avaliacoes > 1000) %>% 
+                        group_by(decada) %>%
+                        filter(decada == decada_escolhida) %>% 
+                        slice_max(n=10, order_by = nota_imdb, with_ties = TRUE) %>% 
+                        ggplot(aes(y = fct_reorder(titulo_original, nota_imdb, .desc= F) , x = nota_imdb)) +
+                        geom_bar(stat = "identity", alpha = 1/2)+
+                        facet_wrap(.~ decada, scales = "free_y")+
+                        xlab("Nota Imdb")+
+                        ylab ("Filmes")+
+                        meu_tema      }
+      
+
+ graf_pordecada(imdb,1910)
+ graf_pordecada(imdb,1920)
+ graf_pordecada(imdb,1930)
+ graf_pordecada(imdb,1940)
+ graf_pordecada(imdb,1950)
+ graf_pordecada(imdb,1960)
+ graf_pordecada(imdb,1970)
+ graf_pordecada(imdb,1980)
+ graf_pordecada(imdb,1990)
+ graf_pordecada(imdb,2000)
+ graf_pordecada(imdb,2010)
+ graf_pordecada(imdb,2020)
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+  
+ 
+  
       
         
   
   
-  
-  
+    
   
   
   
@@ -816,34 +1076,15 @@ glimpse(imdb)   # data_lancamento: está como character
        
 
 
-    # Os 10 Filmes com MAIORES notas - sem considerar a diferenca no num_avalicoes
-    imdb %>% 
-        select(titulo, nota_imdb, ano, num_avaliacoes) %>% 
-        arrange(desc(nota_imdb)) %>% 
-        #slice_max(n=10, order_by = nota_imdb, with_ties = TRUE)
-    view()
     
-    # Os 10 Filmes com MENORES notas - sem considerar a diferenca no num_avalicoes
-    imdb %>% 
-        select(titulo, nota_imdb) %>% 
-        arrange(desc(nota_imdb)) %>% 
-        slice_min(n=10, order_by = nota_imdb, with_ties = TRUE)
+    
+    
     
 
  
 
 
 
-
-
-
-
-
-    # 1. Selecionar algumas colunas para simplificar a visualização
-    # 2. Extrair os dias e meses para coluna individual. 
-    # 3. Agrupar por mês
-    # 4. Filtrar somente os filmes que posseum informação sobre o mese|dia de lancamento  
-    # 5. Contar o número de filmes em cada mês|dia
 
 
 
