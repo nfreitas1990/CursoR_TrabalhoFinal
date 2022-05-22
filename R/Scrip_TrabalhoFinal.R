@@ -915,9 +915,43 @@ imdb_graf_decada %>%
           drop_na(decada) %>%
           filter(decada ==2020) %>% 
           group_by(genero) %>% 
- 
- 
-        
+          summarise(media = mean(nota_media_ponderada)) %>% 
+          arrange(desc(media)) %>% 
+            ggplot()+
+            aes(fct_reorder(genero, media, .desc = F),
+                y = media, 
+                label = media )+
+            coord_flip()+
+            geom_bar(stat = "identity")
+            
+  imdb_decada %>%
+    drop_na(decada) %>%
+    filter(decada >=2000) %>% 
+    group_by(genero) %>% 
+    ggplot()+
+    aes(fct_reorder(genero, nota_media_ponderada, .desc = F),
+        y = nota_media_ponderada)+
+    coord_flip()+
+    geom_boxplot()
+  
+  
+  #separar generos lucrativos. Possuem diferença significativa entre as notas
+ genero_anova <-  imdb_decada %>%
+    drop_na(decada) %>%
+    filter(decada >=2000) %>% 
+    filter(genero== "Animation"|
+           genero=="Sci-Fi"|
+           genero=="Adventura"|
+           genero=="Action"|
+           genero=="Fantasy") %>% 
+    select(titulo_original, nota_media, nota_media_ponderada, genero)
+            
+  #ANova
+  # 1. Homogeneidade de variâncias
+  
+  
+  car::leveneTest(genero_anova$nota_media_ponderada ~ genero_anova$genero) # Ho: variâncias iguais
+  
   
 #3       
  
