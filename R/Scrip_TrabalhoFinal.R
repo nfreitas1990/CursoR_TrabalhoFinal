@@ -818,13 +818,13 @@ glimpse(imdb)   # data_lancamento: está como character
             slice_max(n=10, order_by = num_avaliacoes, with_ties = TRUE) %>% 
             ggplot(aes(x = fct_reorder(titulo_original, num_avaliacoes, .desc = F),
                        y = num_avaliacoes, label= num_avaliacoes))+
-              geom_bar(stat = "identity")+
+              geom_bar(stat = "identity", color = "orange", fill= "lightblue")+
               coord_flip()+
               xlab("Filmes")+
               ylab ("Número de Avaliações") +
               scale_y_continuous (breaks=NULL)+
-              geom_label(position = position_stack (vjust = 0.8),alpha = 0.65, 
-                         colour = "white", fontface = "bold", show_guide  = FALSE)+
+              geom_label(position = position_stack (vjust = 0.9),alpha = 0.8, 
+                         colour = "lightblue", fontface = "bold", show_guide  = FALSE)+
               meu_tema
               
              
@@ -849,13 +849,13 @@ glimpse(imdb)   # data_lancamento: está como character
             slice_max(n=10, order_by = nota_media_ponderada, with_ties = TRUE) %>% 
               ggplot(aes(x = fct_reorder(titulo_original, nota_media_ponderada, .desc = F),
                        y = nota_media_ponderada, label= nota_media_ponderada))+
-            geom_bar(stat = "identity")+
+            geom_bar(stat = "identity", color = "orange", fill= "lightblue")+
             coord_flip()+
             xlab("Filmes")+
             ylab ("Nota IMDB") +
             scale_y_continuous (breaks=NULL)+
-            geom_label(position = position_stack (vjust = 0.9),alpha = 0.65, 
-                       colour = "white", fontface = "bold", show_guide  = FALSE)+
+            geom_label(position = position_stack (vjust = 0.9),alpha = 0.8, 
+                       colour = "lightblue", fontface = "bold", show_guide  = FALSE)+
             meu_tema
  
 #2.1        Quais foram os filmes com maior nota imdb por década?
@@ -870,19 +870,21 @@ glimpse(imdb)   # data_lancamento: está como character
                         aes(fct_reorder(titulo_original, nota_media_ponderada, .desc = F),
                                         y = nota_media_ponderada, 
                                         label = nota_media_ponderada )+
-                        geom_bar(stat = "identity")+
+                        geom_bar(stat = "identity", color = "orange", fill= "lightblue")+
                         coord_flip()+
+                        #ggtitle(rownames(decada))+
+                        #theme(plot.title = element_text(size = 20, color = "orange", face = "bold"))+
                         xlab("Filmes")+
                         ylab ("Nota IMDB") +
-                        geom_label(position = position_stack (vjust = 0.9),alpha = 0.65, 
-                                    colour = "white", fontface = "bold", show_guide  = FALSE)+
+                        geom_label(position = position_stack (vjust = 0.9),alpha = 0.8, 
+                                    colour = "lightblue", fontface = "bold", show_guide  = FALSE)+
                         meu_tema+
                         theme(legend.title = tab$decada)+
                         scale_y_continuous (n.breaks = 10)
                             
                         }
                         
-          
+# Não consegui fazer o titulo sair conforme o ano plotado. =/          
           
 imdb_graf_decada <-   imdb_decada %>%
                         drop_na(decada) %>%
@@ -920,10 +922,19 @@ imdb_graf_decada %>%
             ggplot()+
             aes(fct_reorder(genero, media, .desc = F),
                 y = media, 
-                label = media )+
+                label = round(media, digits = 2))+
             coord_flip()+
-            geom_bar(stat = "identity")
-            
+            geom_bar(stat = "identity", fill= "lightblue", color = "orange")+
+            geom_label(position = position_stack (vjust = 0.9),alpha = 0.8, 
+                               colour = "lightblue", fontface = "bold", show_guide  = FALSE)+
+            ggtitle("Década: 2020")+
+            theme(plot.title = element_text(size = 20, color = "orange", face = "bold"))+
+            labs(x = "Gêneros",
+                 y = "Nota Média - IMDB")+
+            meu_tema
+  
+  
+  
   imdb_decada %>%
     drop_na(decada) %>%
     filter(decada >=2000) %>% 
@@ -932,10 +943,17 @@ imdb_graf_decada %>%
     aes(fct_reorder(genero, nota_media_ponderada, .desc = F),
         y = nota_media_ponderada)+
     coord_flip()+
-    geom_boxplot()
+    geom_boxplot(fill= "lightblue", color = "orange", outlier.colour = "lightgray", outlier.size = 1)+
+    ggtitle("Década: 2000 - 2020")+
+    theme(plot.title = element_text(size = 20, color = "orange", face = "bold"))+
+    ylab("Nota IMDB")+
+    xlab ("Gêneros") +
+    meu_tema
   
   
-  #separar generos lucrativos. Possuem diferença significativa entre as notas
+#    Existe diferença significativa entre as notas?  
+  
+  #separar generos lucrativos. 
  genero_anova <-  imdb_decada %>%
     drop_na(decada) %>%
     filter(decada >=2000) %>% 
@@ -945,150 +963,298 @@ imdb_graf_decada %>%
            genero=="Action"|
            genero=="Fantasy") %>% 
     select(titulo_original, nota_media, nota_media_ponderada, genero)
+ 
+ ggplot(genero_anova)+
+   aes(fct_reorder(genero, nota_media_ponderada, .desc = F),
+       y = nota_media_ponderada)+
+   geom_boxplot(fill= "lightblue", color = "orange", outlier.colour = "lightgray",outlier.size = 1)+
+   xlab("Gêneros")+
+   ylab ("Nota IMDB") +
+   meu_tema
             
   #ANova
-  # 1. Homogeneidade de variâncias
-  
-  
-  car::leveneTest(genero_anova$nota_media_ponderada ~ genero_anova$genero) # Ho: variâncias iguais
-  
-  
-#3       
- 
- 
-#3.1     Quais os generos com maior nota imdb por decada?
- 
- 
- 
-#4        Quais os generos com maior nota imdb por faixa etaria? 
- 
- 
-
-#5       Dos gêneros mais lucrativos, quais possuem as maiores notas imdb
- 
- 
- 
- #1        Quais os generos com maior média de nota imdb
-          
-          imdb_decada %>%
-            select(titulo_original, nota_imdb, decada, num_avaliacoes,genero) %>% 
-            filter(decada >=2000) %>% 
-            unnest(genero) %>% 
-            group_by(genero) %>% 
-             ggplot(aes(x = fct_reorder(genero, nota_imdb, .desc = F), y = nota_imdb))+
-               geom_boxplot()
-            
-          imdb_decada %>%
-            select(titulo_original, nota_imdb, decada, num_avaliacoes,genero) %>% 
-            filter(decada >=2000) %>% 
-            unnest(genero) %>%
-            count(genero) %>% 
-            view()
-             
-
-
-
-    # FILMES COM MAIORES NOTAS IMDB de todos os tempos (com mais de 1000 observações)
+  # 1. Homogeneidade de variâncias - pressuposto
+    car::leveneTest(genero_anova$nota_media_ponderada ~ genero_anova$genero) 
       
-        
-                        
-    # MAIOR NOTA IMDB: 5 filmes com maior nota em cada decada - possibilidade de empate (com mais de 1000 observações)
-    
-       imdb_decada %>%
-         select(titulo_original, nota_imdb, decada, num_avaliacoes) %>%
-         drop_na(decada) %>% 
-         filter(decada >= 1910 & num_avaliacoes > 1000) %>% 
-         group_by(decada) %>%
-         slice_max(n=10, order_by = nota_imdb, with_ties = TRUE) %>% 
-         view()
-         
-    # Media IMDB por genero
-       imdb_decada %>%
-         select(titulo_original, nota_imdb, decada, num_avaliacoes, genero, ano) %>%
-         drop_na(decada) %>% 
-         filter(decada >= 1910 & num_avaliacoes > 1000) %>% 
-         unnest(genero) %>%
-         group_by(genero, ano) %>% 
-         filter(decada >= 2000) %>% 
-         summarise(media = mean(nota_imdb)) %>% 
-         arrange(desc(media)) %>% 
-          ggplot(aes(x = decada, y = media, color = genero))+
-         geom_line()+
-         geom_point()
-         view()
-       
-    # Media IMDB por decada dos gêneros mais lucrativos
-       imdb_decada %>%
-         select(titulo_original, nota_imdb, decada, num_avaliacoes, genero) %>%
-         drop_na(decada) %>% 
-         filter(decada >= 1910 & num_avaliacoes > 1000) %>% 
-         unnest(genero) %>%
-         group_by(decada, genero) %>%
-         summarise(media = mean(nota_imdb)) %>% 
-           ggplot(aes(x = decada, y = media, color = genero))+
-           geom_line()+
-           geom_point()
-         # 
-         # 
-         # slice_max(n=10, order_by = nota_imdb, with_ties = TRUE) %>% 
-          view()
-       
-       
-       
-          # Média do num avaliação por ano
-          
-          imdb_decada %>%
-            select(titulo, ano, num_avaliacoes, data_lancamento) %>% 
-            group_by(ano) %>% 
-            drop_na(year(data_lancamento)) %>% 
-            summarise(media = mean(num_avaliacoes)) %>% 
-            ggplot()+
-            geom_bar(aes(year(data_lancamento, media), stat = "Identity"))+
-            coord_flip() 
-       
-       
-         
-         
- 
-       
-       
-       
-            
- graf_pordecada <- function(tabela, decada_escolhida)  
+  # Ho: variâncias iguais - rejeita Ho p < 2.2e-16 ***
+  
+  
+  #2. Teste: Não deve assumir igualdade de variancia (wilcox)
+  resultado <- oneway.test(nota_media_ponderada ~ genero, data = genero_anova,var.equal = F)
+  
+  # One-way analysis of means (not assuming equal variances)
+  # 
+  # data:  genero_anova$nota_media_ponderada and genero_anova$genero
+  # F = 249.19, num df = 3.0, denom df = 4062.1, p-value < 2.2e-16
+  
+  # CONCLUSÃO: Existe diferença entre os grupos
+  
+  # 4.1 Pos-test
+  pairwise.wilcox.test(genero_anova$nota_media_ponderada, genero_anova$genero)
+  #            Action   Animation    Fantasy
+  # Animation  <2e-16      -           -      
+  #   Fantasy   0.11      <2e-16       -      
+  #   Sci-Fi    <2e-16     <2e-16    <2e-16
+  
+  # Somente o gênero Ação e Fantasia não são diferentes entre si.
+  
+  #  3. Normalidade dos resíduos - pressuposto
+  #  Não consegui extrair os residuos do resultado do teste oneway.
+  #  Como eu teste esse pressuposto?
+  #  Resolvi fazer o não paramétrico só para conferir o resultado já que não consegui testar esse pressuposto da Anova 
+      resultado2 <-  kruskal.test(nota_media_ponderada ~ genero, data = genero_anova)
+      resultado2
+  
+  # CONCLUSÃO: Tb deu diferença entre os grupos.
+  
+  # Testando o teste para variancias iguais    
+      resultado3 <- aov(nota_media_ponderada ~ genero, data = genero_anova)
+      summary(resultado3)
+      car::qqPlot(resultado3)   #resíduos normais
+      TukeyHSD(aov(nota_media_ponderada ~ genero, data = genero_anova))
+      # diff         lwr        upr     p adj
+      # Animation-Action   0.76406284  0.66199465  0.8661310 0.0000000
+      # Fantasy-Action     0.06740219 -0.02307926  0.1578836 0.2221056
+      # Sci-Fi-Action     -0.46381012 -0.55823781 -0.3693824 0.0000000
+      # Fantasy-Animation -0.69666065 -0.81866866 -0.5746526 0.0000000
+      # Sci-Fi-Animation  -1.22787296 -1.35283556 -1.1029104 0.0000000
+      # Sci-Fi-Fantasy    -0.53121230 -0.64690425 -0.4155204 0.0000000
+      
+    # CONCLUSÃO: mesmo resultado. Todos os grupos diferentes entre si, menos Fantasia e Ação
    
-    function(base, decada_escolhida) {
-                      base %>% 
-                        select(titulo_original, nota_imdb, decada, num_avaliacoes) %>%
-                        drop_na(decada) %>% 
-                        filter(decada >= 1910 & num_avaliacoes > 1000) %>% 
-                        group_by(decada) %>%
-                        filter(decada == decada_escolhida) %>% 
-                        slice_max(n=10, order_by = nota_imdb, with_ties = TRUE) %>% 
-                        ggplot(aes(y = fct_reorder(titulo_original, nota_imdb, .desc= F) , x = nota_imdb)) +
-                        geom_bar(stat = "identity", alpha = 1/2)+
-                        facet_wrap(.~ decada, scales = "free_y")+
-                        xlab("Nota Imdb")+
-                        ylab ("Filmes")+
-                        meu_tema      }
+ 
       
+      
+# Mesma Análise somente para 2020
+      genero_anova <-  imdb_decada %>%
+        drop_na(decada) %>%
+        filter(decada ==2020) %>% 
+        filter(genero== "Animation"|
+                 genero=="Sci-Fi"|
+                 genero=="Adventura"|
+                 genero=="Action"|
+                 genero=="Fantasy") %>% 
+        select(titulo_original, nota_media, nota_media_ponderada, genero)
+      
+      ggplot(genero_anova)+
+        aes(fct_reorder(genero, nota_media_ponderada, .desc = F),
+            y = nota_media_ponderada)+
+        geom_boxplot(fill= "lightblue", color = "orange", outlier.colour = "lightgray",outlier.size = 1)+
+        xlab("Gêneros")+
+        ylab ("Nota IMDB") +
+        meu_tema
+      
+      car::leveneTest(genero_anova$nota_media_ponderada ~ genero_anova$genero) #pressuposto
+      TukeyHSD(aov(nota_media_ponderada ~ genero, data = genero_anova))        #analise
+      car::qqPlot(aov(nota_media_ponderada ~ genero, data = genero_anova))     #pressuposto
+      
+      
+    # CONCLUSÃO: Na década de 2020, o gênero animação foi o com maior média. E não houve diferença significativa entre as médias dos gêneros Ação, Fantasia e Ficção.  
+      
+      
+      
+      
+#4       Quais foram os gêneros com maior num avaliação
+      
+      imdb_decada %>% 
+        select(titulo_original, num_avaliacoes, genero) %>%
+        group_by(genero) %>% 
+        summarise(media = mean(num_avaliacoes)) %>% 
+        arrange(desc(media)) %>% 
+        slice_max(n=10, order_by = media, with_ties = TRUE) %>% 
+        ggplot(aes(x = fct_reorder(genero, media, .desc = F),
+                   y = media, label= round(media, digits = 1)))+
+        geom_bar(stat = "identity", color = "orange", fill= "lightblue")+
+        coord_flip()+
+        xlab("Filmes")+
+        ylab ("Número Médio de Avaliações") +
+        scale_y_continuous (breaks=NULL)+
+        geom_label(position = position_stack (vjust = 0.9),alpha = 0.9, 
+                   colour = "lightblue", fontface = "bold", show_guide  = FALSE)+
+        meu_tema
+      
+      
+      
+  
+      
+ #5     Quais os generos com maior nota imdb por decada? 
+      
+       
+      graf_gen_por_decada <- function(tab){
+                              tab %>%
+                                  arrange(desc(nota_media_ponderada)) %>% 
+                                  group_by(genero) %>% 
+                                  summarise(media = mean(nota_media_ponderada)) %>% 
+                                  slice_max(n=10,order_by = media, with_ties = TRUE)%>% 
+                                    ggplot()+
+                                      aes(fct_reorder(genero, media, .desc = F),
+                                      y = media, 
+                                      label = round(media, digits = 2))+
+                                      geom_bar(stat = "identity", color = "orange", fill= "lightblue")+
+                                      coord_flip()+
+                                      xlab("Gêneros")+
+                                      ylab ("Nota Média IMDB") +
+                                      geom_label(position = position_stack (vjust = 0.9),alpha = 0.8, 
+                                                 colour = "lightblue", 
+                                                 fontface = "bold", show_guide  = FALSE)+
+                                      meu_tema +
+                                      scale_y_continuous (n.breaks = 10)
+                                  }
+                              
+      
+      
+imdb_genero_decada  <-   imdb_decada %>%
+                            drop_na(decada) %>%
+                            group_by(decada) %>%                      
+                            nest() %>%                       
+                            filter(decada >1910) %>% 
+                            arrange(desc(decada)) %>% 
+                            mutate(grafico = map(data,graf_gen_por_decada)) 
+                                                                                                    
+      #2020
+      imdb_genero_decada %>%           
+        pluck('grafico', 1)
+      
+      #2010
+      imdb_genero_decada %>%           
+        pluck('grafico', 2)
+      
+      #2000
+      imdb_genero_decada %>%           
+        pluck('grafico', 3)
+      
+      #1990
+      imdb_genero_decada %>%           
+        pluck('grafico', 4)
+      
+      #1980
+      imdb_genero_decada %>%           
+        pluck('grafico', 5)
+      
+      #1970
+      imdb_genero_decada %>%           
+        pluck('grafico', 6)
+      
+      #1960
+      imdb_genero_decada %>%           
+        pluck('grafico', 7)
+      
+      #1950
+      imdb_genero_decada %>%           
+        pluck('grafico', 8)
+      
+      #1940
+      imdb_genero_decada %>%           
+        pluck('grafico', 9)
+      
+      #1930
+      imdb_genero_decada %>%           
+        pluck('grafico', 10)
+      
+      #1920
+      imdb_genero_decada %>%           
+        pluck('grafico', 11)
+      
+      
+      
+    # Conclusão: Os gêneros ANIMAÇÃO, BIOGRAFIA, HISTORIA estão entre os 5 gêneros com maior média imdb em todas as décadas desde 1960. O gênero animação desde 1930 está entre os 5 primeiros com maior nota imdb      
 
- graf_pordecada(imdb,1910)
- graf_pordecada(imdb,1920)
- graf_pordecada(imdb,1930)
- graf_pordecada(imdb,1940)
- graf_pordecada(imdb,1950)
- graf_pordecada(imdb,1960)
- graf_pordecada(imdb,1970)
- graf_pordecada(imdb,1980)
- graf_pordecada(imdb,1990)
- graf_pordecada(imdb,2000)
- graf_pordecada(imdb,2010)
- graf_pordecada(imdb,2020)
+# Grafico da média do IMDB ao longo das décadas
+      
+      imdb_decada %>%
+        filter(decada>1910) %>% 
+        filter(genero == "Animation"|
+               genero == "History"|
+                 genero == "Family"|
+                 genero == "Fantasy"|
+                 genero == "Animation"|
+                 genero == "War"|
+                 genero == "Biography"|
+                 genero == "Sci-Fi"|
+                 genero == "Action") %>% 
+        group_by(genero, decada) %>% 
+        summarise(media = mean(nota_media_ponderada)) %>% 
+        ggplot(aes(x= decada,y = media,label = genero, color = genero))+
+        geom_line(size= 1)+
+        geom_point(size= 2)+
+        xlab("Década")+
+        ylab ("Nota Média IMDB") +
+        scale_x_continuous(breaks=seq(1920, 2100, 10))+
+        scale_y_continuous(breaks=seq(0, 10, 0.5))+
+        scale_colour_manual(values = c("Animation" = "#004586", "Action" = "#ff420e", "Biography" = "#ffd320", "Family" = "#579d1c", "Fantasy" = "#990099", "History"="#99CC33", "Sci-Fi"="#3333CC","War"="#33CCCC"))+
+        
+        meu_tema +
+        theme(panel.grid.major.y = element_line(color = "lightgray",
+                                                size = 0.5,
+                                                linetype = 2),
+              plot.margin = margin(t = 20,  # Top margin
+                                   r = 50,  # Right margin
+                                   b = 40,  # Bottom margin
+                                   l = 10),
+              panel.border = element_blank())+ # Left margin)
+        annotate("text", x = 2028, y = 6.4, label = "Biography", colour = "#ffd320", size = 5)+
+        annotate("text", x = 2028, y = 6.3, label = "Animation", colour = "#004586", size = 5)+
+        annotate("text", x = 2028, y = 6.1, label = "History", colour = "#99CC33", size = 5)+
+        annotate("text", x = 2028, y = 5.8, label = "War", colour = "#33CCCC", size = 5)+
+        annotate("text", x = 2028, y = 5.7, label = "Family", colour = "#579d1c", size = 5)+
+        annotate("text", x = 2028, y = 5.6, label = "Fantasy", colour = "#990099", size = 5)+
+        annotate("text", x = 2028, y = 5.3, label = "Action", colour = "#ff420e", size = 5)+
+        annotate("text", x = 2028, y = 5.0, label = "Sci-Fi", colour = "#3333CC", size = 5)
+        
+      
+    
+      
+      
+      
+ 
+  
+  
+  
+  
+  
+  
+  # CONCLUSÃO:   
+      
+      
+      
+      
+      
+      
+      #6         Quais os generos com maior nota imdb por faixa etaria?   
+      
+      
+      view(imdb_decada)
+
+      
+      
+            
+      
+      
+#     CONCLUSÃO FINAL: 
+#1.  Década 2000-2020: gêneros com maior nota imdb foram Biografia, Guerra, História, Animação e Música
+#2.  Década 2020: gênero com maior nota média foi Animação
+#3.  Dos gêneros mais lucrativos, Animação obteve maior média Imdb no perído de 2000-2020
+#4.  Década 2020: Animação foi o com maior média. Não havendo diferenças significativas entre as notas dos gêneros de Ação, Fantasia e Ficção.
+#5.  Ficção, Aventura, Animação, Biografia e Fantasia foram os gêneros com maior numero de avaliações de todos os tempos 
+#6.  Os gêneros ANIMAÇÃO, BIOGRAFIA, HISTORIA estão entre os 5 gêneros com maior média imdb em todas as décadas desde 1960. 
+#7.  O gênero animação desde 1930 está entre os 5 primeiros com maior nota imdb       
+      
+ 
+
  
  
  
+
  
  
+
+ 
+ 
+ 
+
+
+
+
  
  
  
