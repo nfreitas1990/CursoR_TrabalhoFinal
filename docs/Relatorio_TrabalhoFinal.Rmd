@@ -15,8 +15,144 @@ output:
 O IMDb *(Internet Movie Database)* é o maior banco de dados online sobre o cinema mundial. Contém informações sobre milhões de filmes e programas de TV e entreterimento.
 
 
-Utilizando a base de dados IMDd[^1], este relatório objetiva avaliar a existência de estratégias, em termos de produção de filmes, que possibilite, simultaneamente, retorno financeiro para um investidor e fama para o cinestra.
+Utilizando a base de dados IMDd[^1], este relatório objetiva avaliar a existência de uma estratégia, em termos de produção de filmes, que atenda, simultaneamente, a necessidade de retorno financeiro para um investidor e fama para o cinestra.
 
 [^1]: A base de dados consiste em uma adaptação para o [Curso R para Ciência de Dados II](https://curso-r.com/)
 
 Código para as análises pode ser acessado [GitHub nfreitas1990](https://github.com/nfreitas1990/CursoR_TrabalhoFinal)
+
+```{r include = FALSE, echo = FALSE, message=FALSE, warning=FALSE}
+# Carregar os Dados
+imdb <- basesCursoR::pegar_base("imdb_completa")
+imdb_pessoas <- basesCursoR::pegar_base("imdb_pessoas")
+imdb_avaliacoes <- basesCursoR::pegar_base("imdb_avaliacoes")
+
+
+```
+
+```{r include = FALSE, echo = FALSE, message=FALSE, warning=FALSE}
+library(dplyr)
+library(tidyverse)
+library(readr)
+library(lubridate)
+library(ggplot2)
+library(purrr)
+library(stringr)
+
+```
+
+
+```{r include = FALSE, echo = FALSE, message=FALSE, warning=FALSE}
+# Preparação dos dados
+# Acertar os dados:
+
+# data_lancamento:criar coluna de mes e dia | Mudar tipo para date
+          imdb <- imdb %>% 
+                        mutate(data_lancamento = ymd(data_lancamento)) %>% 
+                        separate(col = data_lancamento,
+                                 into = c("ano_date","mes","dia"),  
+                                 sep = "-", remove = FALSE) %>% 
+                        select(-ano_date)
+          
+          class(imdb$data_lancamento)
+
+
+      # ano: Mudar tipo
+        
+           imdb <- imdb %>% 
+                    mutate(across(
+                      .cols = c(ano, mes, dia),
+                      .fns = as.factor))
+           
+## Dinheiro  
+       
+      # orcamento:Tirando o Caractere da moeda para transformar para numero e calcular o lucro
+        imdb <-imdb %>% 
+                   separate(col = orcamento,
+                            into = c("moeda_orcamento","orcamento"),  
+                            sep = " ", remove = FALSE) %>% 
+                   mutate(orcamento = as.double(orcamento)) 
+       
+      
+      # receita
+       imdb <-imdb %>% 
+                   separate(col = receita,
+                            into = c("moeda_receita","receita"),  
+                            sep = " ", remove = FALSE) %>% 
+                   mutate(receita = as.double(receita))        
+       
+      
+      # receita_eua
+       imdb <-imdb %>% 
+                   separate(col = receita_eua,
+                            into = c("moeda_receita_eua","receita_eua"),  
+                            sep = " ", remove = FALSE) %>% 
+                   mutate(receita_eua = as.double(receita_eua))
+```
+
+```{r include = FALSE, echo = FALSE, message=FALSE, warning=FALSE}
+# Base de dados para trabalhar o lucro
+
+imdb_lucrodolar <-   imdb %>% 
+                               #select(titulo, 
+                               #moeda_orcamento,orcamento, 
+                               #moeda_receita, receita, 
+                               #moeda_receita_eua,receita_eua) %>% 
+                               drop_na(orcamento) %>% 
+                               filter(moeda_orcamento == "$" & 
+                                        moeda_receita == "$"&
+                                        moeda_receita_eua == "$")
+
+imdb_lucrodolar <- imdb_lucrodolar %>% 
+                                           mutate(lucro_dolar = receita - orcamento) %>% 
+                                           mutate(lucro_mi = lucro_dolar/1000000) %>%
+                                           mutate(orcamento_mi = orcamento/1000000) %>% 
+                                           mutate(receita_mi = receita/1000000) %>% 
+                                           select(- c(moeda_orcamento,moeda_receita,
+                                                      moeda_receita_eua, receita_eua)) 
+       
+
+```
+
+```{r include = FALSE, echo = FALSE, message=FALSE, warning=FALSE}
+# Configurando o tema dos gráficos    
+  meu_tema <- theme(legend.position = "none",
+                      axis.line.x = element_line(colour = "gray"),
+                      axis.line.y = element_line(colour = "gray"),
+                      
+                      axis.title = element_text(face = "bold", size = 16),
+                      axis.text.x = element_text(face = "plain", size=12),
+                      axis.text.y = element_text(face = "plain", size=12),
+                      
+                      axis.ticks = element_line(colour = "gray", size = 0.2),
+                      
+                      panel.grid = element_blank(),
+                      panel.background = element_blank())
+```
+
+
+```{r include = FALSE, echo = FALSE, message=FALSE, warning=FALSE}
+total_filmes <- n_distinct(imdb$titulo)
+filmes_usados <-n_distinct(imdb_lucrodolar$titulo)
+```
+
+
+
+## **Análises** 
+
+
+O banco de dados possui o total de **`r total_filmes` filmes**. Para as análises referente ao lucro dos filmes, apenas **`r filmes_usados`** foram utilizados. Isso ocorreu após a exclusão de dados com valores *NAs* para receita ou orçamentoe e informações diferente de dólar para os mesmos campos.  
+
+## Filmes mais lucrativos de todos os tempos
+```{r echo = FALSE, message=FALSE, warning=FALSE}
+imdb_lucrodolar %>% 
+      select(titulo_original, lucro_mi) %>% 
+      arrange(desc(lucro_mi)) %>% 
+      slice_max(n=20, order_by = lucro_mi, with_ties = TRUE) %>% 
+      ggplot(aes(y = fct_reorder(titulo_original,lucro_mi,.desc = F), x = lucro_mi)) +  # reordenar(forcats)
+        geom_bar(stat = "identity", alpha = 1/2) +       # stat para não contar os dados
+        xlab("Lucro (Milhões)")+
+        ylab ("Filmes")+
+        meu_tema
+```
+
