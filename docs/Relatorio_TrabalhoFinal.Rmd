@@ -1,36 +1,22 @@
 ---
-title: "**Natália Freitas**"
+title: "Qual filme produzir?"
+author: "Natália Freitas"
 date: "Maio 2022"
 output:
-  rmdformats::material:
-    highlight: kate
-editor_options: 
-  chunk_output_type: inline
+  prettydoc::html_pretty:
+    theme: cayman
+    highlight: github
 ---
 
-```{r setup, include=FALSE}
-## Global options
-knitr::opts_chunk$set(cache = TRUE)
-```
+# **Ao produzir um filme, é possível adotar uma estratégia que atenda, simultaneamente, ambiciosos por fama e dinheiro ?**
 
-# **Contextualização**
+### Será que o retorno financeiro de um filme está associado a avaliação de qualidade que recebe pelos críticos?
 
-### Ao produzir um filme, é possível adotar uma estratégia que atenda ambiciosos por fama e dinheiro?
+O IMDb *(Internet Movie Database)* é o maior banco de dados online sobre o cinema mundial. Contém informações sobre milhões de filmes e programas de TV e entreterimento.
 
-Utilizando a base de dados Imbd[^1], este relatório objetiva indicar uma estratégia que garanta retorno financeiro para o investidor e fama para o cinestra que produz um filme.
+
+Utilizando a base de dados IMDd[^1], este relatório objetiva avaliar a existência de estratégias, em termos de produção de filmes, que possibilite, simultaneamente, retorno financeiro para um investidor e fama para o cinestra.
 
 [^1]: A base de dados consiste em uma adaptação para o [Curso R para Ciência de Dados II](https://curso-r.com/)
 
-Qual o tipo de filme produz maior retorno financeiro? Esse mesmo gênero é o mais assistido e avaliado pelos cinéfilos. Essas são algumas perguntas que serão exploradas.
-
-
-
-```{r include = FALSE, message = FALSE, warning = FALSE}
-# Carregar os Dados
-imdb <- basesCursoR::pegar_base("imdb_completa")
-imdb_pessoas <- basesCursoR::pegar_base("imdb_pessoas")
-imdb_avaliacoes <- basesCursoR::pegar_base("imdb_avaliacoes")
-
-```
-
-
+Código para as análises pode ser acessado [GitHub nfreitas1990](https://github.com/nfreitas1990/CursoR_TrabalhoFinal)
