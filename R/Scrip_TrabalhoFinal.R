@@ -1203,17 +1203,12 @@ imdb_genero_decada  <-   imdb_decada %>%
         
       
     
-      
-      
-      
- 
+     
   
-  
-  
-  
-  
-  
-  # CONCLUSÃO:   
+  # CONCLUSÃO:  
+      # FICÇÃO|ACAO|FANTASIA| FAMILIA: teve um queda ao longo das decadas
+      # Guerra: queda na ultima (2010) e continua caindo em 2020
+      # Animação, biografia e histpria: 
       
       
       
