@@ -1,0 +1,36 @@
+---
+title: "**Natália Freitas**"
+date: "Maio 2022"
+output:
+  rmdformats::material:
+    highlight: kate
+editor_options: 
+  chunk_output_type: inline
+---
+
+```{r setup, include=FALSE}
+## Global options
+knitr::opts_chunk$set(cache = TRUE)
+```
+
+# **Contextualização**
+
+### Ao produzir um filme, é possível adotar uma estratégia que atenda ambiciosos por fama e dinheiro?
+
+Utilizando a base de dados Imbd[^1], este relatório objetiva indicar uma estratégia que garanta retorno financeiro para o investidor e fama para o cinestra que produz um filme.
+
+[^1]: A base de dados consiste em uma adaptação para o [Curso R para Ciência de Dados II](https://curso-r.com/)
+
+Qual o tipo de filme produz maior retorno financeiro? Esse mesmo gênero é o mais assistido e avaliado pelos cinéfilos. Essas são algumas perguntas que serão exploradas.
+
+
+
+```{r include = FALSE, message = FALSE, warning = FALSE}
+# Carregar os Dados
+imdb <- basesCursoR::pegar_base("imdb_completa")
+imdb_pessoas <- basesCursoR::pegar_base("imdb_pessoas")
+imdb_avaliacoes <- basesCursoR::pegar_base("imdb_avaliacoes")
+
+```
+
+
