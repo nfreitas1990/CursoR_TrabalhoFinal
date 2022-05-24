@@ -159,7 +159,7 @@ imdb_lucrodolar %>%
                  label = round(lucro_mi, digits = 0))) +  
         geom_bar(stat = "identity", alpha = 1/2, color = "orange", fill= "lightblue") +       
         geom_label(position = position_stack (vjust = 0.5),alpha = 0.7, 
-              colour = "orange", fontface = "bold", show_guide  = FALSE, size = 3.5)+
+              colour = "orange", fontface = "bold", show_guide  = FALSE, size = 2.5)+
         scale_x_continuous(labels = scales::dollar)+
         xlab("Lucro (Milhões)")+
         ylab ("Títulos")+
@@ -234,7 +234,13 @@ imdb_lucrodolar_purr %>%
           meu_tema
         
 ```
+
+
 Olhando agora apenas para os gêneros mais lucrativos, o período mensal mais propício para o lançamento se mantém?
+
+
+Em Dezembro, todos os gêneros mantiveram os lucros médios altos. Além do mês de dezembro, para o gênero Ficção, os meses de Abril até Julho também foram meses com boa média de lucro; para o gênero Fantasia, novembro até janeiro; para Animação, os meses de agosto e novembro também obtiveram médias próximas a dezembro; para aventura, o lucro médio não variou ao longo dos meses. 
+
 
 ```{r echo = FALSE, message=FALSE, warning=FALSE}
 imdb_lucrodolar_purr %>% 
@@ -248,12 +254,12 @@ imdb_lucrodolar_purr %>%
                      genero == "Fantasy") %>% 
            ggplot(aes(y = media, x= mes, fill = genero, label = round(media,digits = 1))) +
            geom_bar(stat = "identity")+
-            scale_fill_manual(values=c("#E62634",
-                                       "#009847",
-                                       "#EF9A03",
-                                       "#2A2961"))+
-           geom_label(position = position_stack (vjust = 0.5),alpha = 1/2, 
-                      colour = "lightgray", fontface = "bold",size=1.9, show_guide  = FALSE)+
+            scale_fill_manual(values=c("#5B7694",
+                                       "#048ABF",
+                                       "#04B2D9",
+                                       "#07354D"))+
+           geom_label(position = position_stack (vjust = 0.5),alpha = 0.9, 
+                      colour = "lightgray", fontface = "bold",size=2.5, show_guide  = FALSE)+
            coord_flip()+
            xlab("Mês")+
            ylab ("Lucro Médio (Milhões)") +
@@ -264,7 +270,48 @@ imdb_lucrodolar_purr %>%
 ```
 
 
+Olhos mais atentos notam que para o gênero animação houve um lucro médio muito acima das demais médias. Isso ocorreu devido
+
+
 ```{r echo = FALSE, message=FALSE, warning=FALSE}
+imdb_lucrodolar_purr %>% 
+          select(titulo_original, lucro_mi, genero) %>% 
+          unnest(genero) %>%
+          filter(genero == "Animation") %>% 
+          arrange(desc(lucro_mi)) %>% 
+          slice_max(n=20, order_by = lucro_mi, with_ties = TRUE) %>% 
+          ggplot(aes(y = fct_reorder(titulo_original,lucro_mi,.desc = F), x = lucro_mi)) +  
+          geom_bar(stat = "identity", alpha = 1/2, color= "orange", fill="lightblue") +     
+          xlab("Lucro (Milhões)")+
+          ylab ("Títulos")+
+          scale_x_continuous(labels = scales::dollar)+
+          annotate("text", x = 1250, y = 18, label = "2019", colour = "white", size = 5)+
+          annotate("text", x = 2200, y = 18, label = "1994", colour = "white", size = 5)+
+          theme(plot.margin = margin(t = 20,  # Top margin
+                               r = 50,  # Right margin
+                               b = 40,  # Bottom margin
+                               l = 10),
+        panel.border = element_blank())+ # Left margin)
+          
+          geom_segment( aes( x = 2500, y = 18, xend = 2400, yend = 18), 
+                        arrow = arrow(length = unit(0.30,"cm"), type='closed'),
+                        size=1, color='orange') + 
+          geom_segment( aes( x = 1300, y = 16, xend = 1200, yend = 16), 
+                        arrow = arrow(length = unit(0.30,"cm"), type='closed'),
+                        size=1, color='orange') +         
+          geom_segment( aes( x = 1200, y = 14, xend = 1100, yend = 14), 
+                        arrow = arrow(length = unit(0.30,"cm"), type='closed'),
+                        size=1, color='orange') +         
+          geom_segment( aes( x = 1000, y = 6, xend = 900, yend = 6), 
+                        arrow = arrow(length = unit(0.30,"cm"), type='closed'),
+                        size=1, color='orange') +         
+          geom_segment( aes( x = 900, y = 2, xend = 800, yend = 2), 
+                        arrow = arrow(length = unit(0.30,"cm"), type='closed'),
+                        size=1, color='orange') +         
+          
+          meu_tema
+   
+
 ```
 
 

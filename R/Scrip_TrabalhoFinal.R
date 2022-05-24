@@ -487,7 +487,7 @@ glimpse(imdb)   # data_lancamento: está como character
      # CONCLUSÃO:Dezembro: todos os gêneros tiveram o lucro médio alto (>150Mi)    
      #                     Sci-Fi Melhor mes foi de Abril até Julho e o mes de  Dezembro
      #                     Fantasia melhor mês: Novembro, Dezembro e Janeiro.
-     #                     Animação: Agosto
+     #                     Animação: Agosto, setembro, novembro, dezembro 
      #                     Aventura: foi bom ao longo do ano
         
     # Achei estranho essa média tão discrepante no mês de agosto para o gênero animação. Tentei procurar na net se existia algum festival de animação de cinema nesse período. Mas o festival famoso que ocorre desde 1960 parece q ocorre em junho. Então vou checar os dados.
@@ -513,7 +513,7 @@ glimpse(imdb)   # data_lancamento: está como character
           arrange(desc(lucro_mi)) %>%
           head()
           
-        # Neste mês temos 3 filmes (The Lion King, Minions, Despicable Me 3 ) que tiveram um dos lucros mais altos do gênero Animação
+        # Neste mês temos 6 filmes (The Lion King 1994 e 2019, Minions, Despicable Me 3, ice age: dawn of dinosaurs, Shereck the third ) que tiveram um dos lucros mais altos do gênero Animação
         # 
         # Os 20 filmes de Animação Mais Lucrativos
         imdb_lucrodolar_purr %>% 
@@ -523,12 +523,37 @@ glimpse(imdb)   # data_lancamento: está como character
           arrange(desc(lucro_mi)) %>% 
           slice_max(n=20, order_by = lucro_mi, with_ties = TRUE) %>% 
           ggplot(aes(y = fct_reorder(titulo_original,lucro_mi,.desc = F), x = lucro_mi)) +  # reordenar(forcats)
-          geom_bar(stat = "identity", alpha = 1/2) +       # stat para não contar os dados
+          geom_bar(stat = "identity", alpha = 1/2, color= "orange", fill="lightblue") +       # stat para não contar os dados
           xlab("Lucro (Milhões)")+
           ylab ("Títulos")+
           scale_x_continuous(labels = scales::dollar)+
+          annotate("text", x = 1250, y = 18, label = "2019", colour = "white", size = 5)+
+          annotate("text", x = 2200, y = 18, label = "1994", colour = "white", size = 5)+
+          theme(plot.margin = margin(t = 20,  # Top margin
+                                     r = 50,  # Right margin
+                                     b = 40,  # Bottom margin
+                                     l = 10),
+                panel.border = element_blank())+ # Left margin)
+          
+          geom_segment( aes( x = 2500, y = 18, xend = 2400, yend = 18), 
+                        arrow = arrow(length = unit(0.30,"cm"), type='closed'),
+                        size=1, color='orange') + 
+          geom_segment( aes( x = 1300, y = 16, xend = 1200, yend = 16), 
+                        arrow = arrow(length = unit(0.30,"cm"), type='closed'),
+                        size=1, color='orange') +         
+          geom_segment( aes( x = 1200, y = 14, xend = 1100, yend = 14), 
+                        arrow = arrow(length = unit(0.30,"cm"), type='closed'),
+                        size=1, color='orange') +         
+          geom_segment( aes( x = 1000, y = 6, xend = 900, yend = 6), 
+                        arrow = arrow(length = unit(0.30,"cm"), type='closed'),
+                        size=1, color='orange') +         
+          geom_segment( aes( x = 900, y = 2, xend = 800, yend = 2), 
+                        arrow = arrow(length = unit(0.30,"cm"), type='closed'),
+                        size=1, color='orange') +         
+          
           meu_tema
-  
+        
+         
   # Senti falta de alguma coisa para comparar a lista dos meses de agosto, para saber se estes títulos estavam contidos na lista dos 20 mais lucrativos.   
         
   # CONCLUSÃO: Vou seguir com os dados. Talvez esses dois filmes tenham puxado a média desse mes para cima. Poderia recalcular a media sem eles para saber se mudaria mto, mas vou seguir.  
@@ -640,7 +665,7 @@ glimpse(imdb)   # data_lancamento: está como character
           geom_smooth(method="lm")
           
         
-# CONCLUSÃO: Não existe relação entre o lucro e a nota do imdb, como eu supunha inicial. Então, para o retorno financeiro nao interessa a nota recebida pelo público. Pois um filme bem avaliado pelo público não necessariamente teve otimo retorno financeiro.
+# CONCLUSÃO: Existe um baixa correlação entre o lucro e a nota do imdb (0.28), como eu supunha inicial. Então, para o retorno financeiro nao interessa a nota recebida pelo público. Pois um filme bem avaliado pelo público não necessariamente teve otimo retorno financeiro.
         
 
 #6        # Qual cineastra teve o maior retorno financeiro?
