@@ -149,7 +149,7 @@ O banco de dados possui o total de **`r total_filmes` filmes**. Para as análise
 Avatar e Avengers foram os filmes mais lucrativos de todos os tempos, lucrando mais de 2 bilhões de dólares cada um. Ultrapassando *Titanic*, que havia permanecido por anos como campeão de bilheterias.
 ![](../inst/avatar.png)
 
-```{r echo = FALSE, message=FALSE, warning=FALSE}
+```{r echo = FALSE, message=FALSE, warning=FALSE, fig.width = 7, fig.height = 6.5}
 imdb_lucrodolar %>% 
       select(titulo_original, lucro_mi) %>% 
       arrange(desc(lucro_mi)) %>% 
@@ -168,7 +168,7 @@ imdb_lucrodolar %>%
 
 Ao olharmos para o número de filmes lançados desde 1920, percebemos que a **maior quantidade** se concentra em gêneros de **Drama**, **Comédia** e **Ação**.
 
-```{r echo = FALSE, message=FALSE, warning=FALSE}
+```{r echo = FALSE, message=FALSE, warning=FALSE, fig.width = 7, fig.height = 6.5}
 # Numero de filmes em cada categoria - Número de títulos por gênero
        imdb_lucrodolar %>% 
           mutate(split_generos = str_split(genero, "\\, ")) %>%  
@@ -200,7 +200,7 @@ imdb_lucrodolar_purr <- imdb_lucrodolar %>%
         
 ```
 
-```{r echo = FALSE, message=FALSE, warning=FALSE}
+```{r echo = FALSE, message=FALSE, warning=FALSE, fig.width = 7, fig.height = 6.5}
 imdb_lucrodolar %>% 
             mutate(split_generos = str_split(genero, "\\, ")) %>%  
             unnest(split_generos) %>% 
@@ -221,7 +221,7 @@ E será que existe diferença no lucro médio dos filmes ao longo dos meses?
 
 Os meses de Dezembro e Janeiro apresentaram maior lucro médio ao longo do tempo. Podemos, portanto, inferir que seriam meses interessantes para fazer o lançamento de um filme. 
 
-```{r echo = FALSE, message=FALSE, warning=FALSE}
+```{r echo = FALSE, message=FALSE, warning=FALSE, fig.width = 6, fig.height = 6}
 imdb_lucrodolar_purr %>% 
           group_by(mes) %>% 
           drop_na(mes) %>% 
@@ -242,7 +242,7 @@ Olhando agora apenas para os gêneros mais lucrativos, o período mensal mais pr
 Em Dezembro, todos os gêneros mantiveram os lucros médios altos. Além do mês de dezembro, para o gênero Ficção, os meses de Abril até Julho também foram meses com boa média de lucro; para o gênero Fantasia, novembro até janeiro; para Animação, os meses de agosto e novembro também obtiveram médias próximas a dezembro; para aventura, o lucro médio não variou ao longo dos meses. 
 
 
-```{r echo = FALSE, message=FALSE, warning=FALSE}
+```{r echo = FALSE, message=FALSE, warning=FALSE, fig.width = 7, fig.height = 6.5}
 imdb_lucrodolar_purr %>% 
           group_by(mes, genero) %>%
           unnest(genero) %>% 
@@ -273,7 +273,7 @@ imdb_lucrodolar_purr %>%
 Olhos mais atentos notam que para o gênero animação houve um lucro médio muito acima das demais médias. Isso ocorreu devido
 
 
-```{r echo = FALSE, message=FALSE, warning=FALSE}
+```{r echo = FALSE, message=FALSE, warning=FALSE, fig.width = 7, fig.height = 6.5}
 imdb_lucrodolar_purr %>% 
           select(titulo_original, lucro_mi, genero) %>% 
           unnest(genero) %>%
