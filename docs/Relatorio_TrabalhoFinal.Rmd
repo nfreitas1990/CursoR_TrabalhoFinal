@@ -15,7 +15,7 @@ output:
 O IMDb *(Internet Movie Database)* é o maior banco de dados online sobre o cinema mundial. Contém informações sobre milhões de filmes e programas de TV e entreterimento.
 
 
-Utilizando a base de dados IMDd[^1], este relatório objetiva avaliar a existência de uma estratégia, em termos de produção de filmes, que atenda, simultaneamente, a necessidade de retorno financeiro para um investidor e fama para o cinestra.
+Utilizando a base de dados IMDd[^1], este relatório objetiva avaliar a existência de uma estratégia, em termos de produção de filmes, que atenda, simultaneamente, a necessidade de retorno financeiro de um investidor e fama para um cinestra.
 
 [^1]: A base de dados consiste em uma adaptação para o [Curso R para Ciência de Dados II](https://curso-r.com/)
 
@@ -141,18 +141,159 @@ filmes_usados <-n_distinct(imdb_lucrodolar$titulo)
 ## **Análises** 
 
 
-O banco de dados possui o total de **`r total_filmes` filmes**. Para as análises referente ao lucro dos filmes, apenas **`r filmes_usados`** foram utilizados. Isso ocorreu após a exclusão de dados com valores *NAs* para receita ou orçamentoe e informações diferente de dólar para os mesmos campos.  
+O banco de dados possui o total de **`r total_filmes` filmes**. Para as análises referente ao lucro dos filmes, apenas **`r filmes_usados`** foram utilizados. Isso ocorreu após a exclusão de filmes com valores *NAs* para receita ou orçamento e também da exclusão de filmes que os mesmos campos não eram em dólar, o que dificultaria comparações.
+
 
 ## Filmes mais lucrativos de todos os tempos
+
+Avatar e Avengers foram os filmes mais lucrativos de todos os tempos, lucrando mais de 2 bilhões de dólares cada um. Ultrapassando *Titanic*, que havia permanecido por anos como campeão de bilheterias.
+![](../inst/avatar.png)
+
 ```{r echo = FALSE, message=FALSE, warning=FALSE}
 imdb_lucrodolar %>% 
       select(titulo_original, lucro_mi) %>% 
       arrange(desc(lucro_mi)) %>% 
       slice_max(n=20, order_by = lucro_mi, with_ties = TRUE) %>% 
-      ggplot(aes(y = fct_reorder(titulo_original,lucro_mi,.desc = F), x = lucro_mi)) +  # reordenar(forcats)
-        geom_bar(stat = "identity", alpha = 1/2) +       # stat para não contar os dados
+      ggplot(aes(y = fct_reorder(titulo_original,lucro_mi,.desc = F),
+                 x = lucro_mi,
+                 label = round(lucro_mi, digits = 0))) +  
+        geom_bar(stat = "identity", alpha = 1/2, color = "orange", fill= "lightblue") +       
+        geom_label(position = position_stack (vjust = 0.5),alpha = 0.7, 
+              colour = "orange", fontface = "bold", show_guide  = FALSE, size = 3.5)+
+        scale_x_continuous(labels = scales::dollar)+
         xlab("Lucro (Milhões)")+
-        ylab ("Filmes")+
+        ylab ("Títulos")+
         meu_tema
 ```
 
+Ao olharmos para o número de filmes lançados desde 1920, percebemos que a **maior quantidade** se concentra em gêneros de **Drama**, **Comédia** e **Ação**.
+
+```{r echo = FALSE, message=FALSE, warning=FALSE}
+# Numero de filmes em cada categoria - Número de títulos por gênero
+       imdb_lucrodolar %>% 
+          mutate(split_generos = str_split(genero, "\\, ")) %>%  
+          unnest(split_generos) %>% 
+          group_by(split_generos) %>%
+          summarise(n_generos = n_distinct(titulo)) %>% 
+          ggplot(aes(y = fct_reorder(split_generos, n_generos, .desc= F) , x = n_generos)) +
+          geom_bar(stat = "identity", alpha = 1/2, color="orange", fill="lightblue") +
+          xlab("Número de filmes")+
+          ylab ("Gêneros")+
+          meu_tema
+        
+```
+
+Mas, embora estes gêneros possuam a maior quantidade de filmes lançados, não foram os gêneros mais lucrativos. O lucro médio foi maior para os gêneros de **Animação**, **Aventura**, **Ficção**, **Ação** e **Fantasia**.
+
+
+O que nos leva a inferir que a melhor estratégia, em termos de retorno financeiro, seria investir na produção dos gêneros que têm apresentado maior lucro médio ao longo de todo o período registrado.
+
+```{r include =  FALSE, echo = FALSE, message=FALSE, warning=FALSE}
+#Salvar o banco de dados para usar o purr
+imdb_lucrodolar_purr <- imdb_lucrodolar %>% 
+                                  mutate(genero = str_split(genero, "\\, "),
+                                         elenco = str_split(elenco, "\\, "),
+                                         idioma = str_split(idioma, "\\, "),
+                                         pais = str_split(pais,"\\, "),
+                                         direcao = str_split(direcao,"\\, "),
+                                         roteiro = str_split(roteiro,"\\, "))
+        
+```
+
+```{r echo = FALSE, message=FALSE, warning=FALSE}
+imdb_lucrodolar %>% 
+            mutate(split_generos = str_split(genero, "\\, ")) %>%  
+            unnest(split_generos) %>% 
+            group_by(split_generos) %>% 
+            summarise(media_lucro = mean(lucro_mi)) %>% 
+            arrange(desc(media_lucro)) %>% 
+            ggplot(aes(y = fct_reorder(split_generos, media_lucro, .desc= F) , x = media_lucro)) +
+            geom_bar(stat = "identity", alpha = 1/2, color="orange", fill="lightblue")+
+            scale_x_continuous(labels = scales::dollar)+
+            xlab("Lucro Médio (Milhões)")+
+            ylab ("Gêneros")+
+            meu_tema
+        
+```
+
+E será que existe diferença no lucro médio dos filmes ao longo dos meses? 
+
+
+Os meses de Dezembro e Janeiro apresentaram maior lucro médio ao longo do tempo. Podemos, portanto, inferir que seriam meses interessantes para fazer o lançamento de um filme. 
+
+```{r echo = FALSE, message=FALSE, warning=FALSE}
+imdb_lucrodolar_purr %>% 
+          group_by(mes) %>% 
+          drop_na(mes) %>% 
+          summarise(media_lucro = mean(lucro_mi, na.rm = TRUE)) %>% 
+          ggplot(aes(y = media_lucro, x= mes)) +
+          geom_bar(stat = "identity", alpha = 1/2, color = "orange", fill="lightblue")+
+          scale_y_continuous(labels = scales::dollar)+
+          xlab("Mês")+
+          ylab ("Lucro Médio (Milhões)")+
+          meu_tema
+        
+```
+Olhando agora apenas para os gêneros mais lucrativos, o período mensal mais propício para o lançamento se mantém?
+
+```{r echo = FALSE, message=FALSE, warning=FALSE}
+imdb_lucrodolar_purr %>% 
+          group_by(mes, genero) %>%
+          unnest(genero) %>% 
+          drop_na(mes) %>% 
+          summarise(media = mean(lucro_mi)) %>% 
+           filter(genero == "Animation"|
+                     genero == "Adventure"|
+                     genero == "Sci-Fi"|
+                     genero == "Fantasy") %>% 
+           ggplot(aes(y = media, x= mes, fill = genero, label = round(media,digits = 1))) +
+           geom_bar(stat = "identity")+
+            scale_fill_manual(values=c("#E62634",
+                                       "#009847",
+                                       "#EF9A03",
+                                       "#2A2961"))+
+           geom_label(position = position_stack (vjust = 0.5),alpha = 1/2, 
+                      colour = "lightgray", fontface = "bold",size=1.9, show_guide  = FALSE)+
+           coord_flip()+
+           xlab("Mês")+
+           ylab ("Lucro Médio (Milhões)") +
+           meu_tema+
+           theme(legend.position = "bottom")+
+           labs(fill = NULL)
+        
+```
+
+
+```{r echo = FALSE, message=FALSE, warning=FALSE}
+```
+
+
+```{r echo = FALSE, message=FALSE, warning=FALSE}
+```
+
+
+```{r echo = FALSE, message=FALSE, warning=FALSE}
+```
+
+
+```{r echo = FALSE, message=FALSE, warning=FALSE}
+```
+
+
+```{r echo = FALSE, message=FALSE, warning=FALSE}
+```
+
+
+```{r echo = FALSE, message=FALSE, warning=FALSE}
+```
+
+
+```{r echo = FALSE, message=FALSE, warning=FALSE}
+```
+
+
+```{r echo = FALSE, message=FALSE, warning=FALSE}
+```
+
+
+```{r echo = FALSE, message=FALSE, warning=FALSE}

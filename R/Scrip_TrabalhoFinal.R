@@ -281,17 +281,24 @@ glimpse(imdb)   # data_lancamento: está como character
 #2. Quais filmes foram os mais lucrativos?
      
     # LISTAGEM DOS 20 FILMES MAIS LUCRATIVOS   
-    imdb_lucrodolar %>% 
-      select(titulo_original, lucro_mi) %>% 
-      arrange(desc(lucro_mi)) %>% 
-      slice_max(n=20, order_by = lucro_mi, with_ties = TRUE) %>% 
-      ggplot(aes(y = fct_reorder(titulo_original,lucro_mi,.desc = F), x = lucro_mi)) +  # reordenar(forcats)
-        geom_bar(stat = "identity", alpha = 1/2) +       # stat para não contar os dados
-        xlab("Lucro (Milhões)")+
-        ylab ("Títulos")+
-        meu_tema
+ imdb_lucrodolar %>% 
+   select(titulo_original, lucro_mi) %>% 
+   arrange(desc(lucro_mi)) %>% 
+   slice_max(n=20, order_by = lucro_mi, with_ties = TRUE) %>% 
+   ggplot(aes(y = fct_reorder(titulo_original,lucro_mi,.desc = F),
+              x = lucro_mi,
+              label = round(lucro_mi, digits = 2))) +  # reordenar(forcats)
+   geom_bar(stat = "identity", alpha = 1/2, color = "orange", fill= "lightblue") +       # stat para não contar os dados
+   geom_label(position = position_stack (vjust = 0.5),alpha = 0.8, 
+              colour = "lightblue", fontface = "bold", show_guide  = FALSE)+
+   scale_x_continuous(labels = scales::dollar)+
+   xlab("Lucro (Milhões)")+
+   ylab ("Títulos")+
+   meu_tema
  
-# CONCLUSÃO: avatar e avengers foram os filmes mais lucrativos, lucraram mais de 2 bilhoes de dolares.
+ 
+ 
+ # CONCLUSÃO: avatar e avengers foram os filmes mais lucrativos, lucraram mais de 2 bilhoes de dolares.
    
  
  
@@ -330,12 +337,10 @@ glimpse(imdb)   # data_lancamento: está como character
           group_by(split_generos) %>%
           summarise(n_generos = n_distinct(titulo)) %>% 
           ggplot(aes(y = fct_reorder(split_generos, n_generos, .desc= F) , x = n_generos)) +
-          geom_bar(stat = "identity", alpha = 1/2) +
-          scale_x_continuous(labels = scales::dollar)+
-          xlab("Lucro Médio (Milhões)")+
+          geom_bar(stat = "identity", alpha = 1/2, color="orange", fill="lightblue") +
+          xlab("Número de filmes")+
           ylab ("Gêneros")+
           meu_tema
-        
         
          
          
@@ -343,18 +348,18 @@ glimpse(imdb)   # data_lancamento: está como character
         
         #lucro medio 
         imdb_lucrodolar %>% 
-            mutate(split_generos = str_split(genero, "\\, ")) %>%  
-            unnest(split_generos) %>% 
-            group_by(split_generos) %>% 
-            summarise(media_lucro = mean(lucro_mi)) %>% 
-            arrange(desc(media_lucro)) %>% 
-            ggplot(aes(y = fct_reorder(split_generos, media_lucro, .desc= F) , x = media_lucro)) +
-            geom_bar(stat = "identity", alpha = 1/2)+
-            scale_x_continuous(labels = scales::dollar)+
-            xlab("Lucro Médio (Milhões)")+
-            ylab ("Gêneros")+
-            meu_tema
-          
+          mutate(split_generos = str_split(genero, "\\, ")) %>%  
+          unnest(split_generos) %>% 
+          group_by(split_generos) %>% 
+          summarise(media_lucro = mean(lucro_mi)) %>% 
+          arrange(desc(media_lucro)) %>% 
+          ggplot(aes(y = fct_reorder(split_generos, media_lucro, .desc= F) , x = media_lucro)) +
+          geom_bar(stat = "identity", alpha = 1/2, color="orange", fill="lightblue")+
+          scale_x_continuous(labels = scales::dollar)+
+          xlab("Lucro Médio (Milhões)")+
+          ylab ("Gêneros")+
+          meu_tema
+        
           
         #lucro total
          imdb_lucrodolar %>% 
@@ -363,7 +368,7 @@ glimpse(imdb)   # data_lancamento: está como character
            group_by(split_generos) %>% 
            summarise(sum_lucro = sum(lucro_mi)) %>% 
            ggplot(aes(y = fct_reorder(split_generos, sum_lucro, .desc= F) , x = sum_lucro)) +
-           geom_bar(stat= "Identity", alpha = 1/2)+
+           geom_bar(stat= "Identity", alpha = 1/2, color="orange", fill="lightblue")+
            scale_x_continuous(labels = scales::dollar)+
            xlab("Lucro Total (Milhões)")+
            ylab ("Gêneros")+
@@ -422,14 +427,14 @@ glimpse(imdb)   # data_lancamento: está como character
         #       
         # Para tentar trabalhar com o purrr sem fazer besteira na tabela q já funciona. rs
         # não consegui não me repetir no código. Voltar depois aqui!  
-        imdb_lucrodolar_purr <- imdb_lucrodolar %>% 
-                                  mutate(genero = str_split(genero, "\\, "),
-                                         elenco = str_split(elenco, "\\, "),
-                                         idioma = str_split(idioma, "\\, "),
-                                         pais = str_split(pais,"\\, "),
-                                         direcao = str_split(direcao,"\\, "),
-                                         roteiro = str_split(roteiro,"\\, "))
-        #    
+      imdb_lucrodolar_purr <- imdb_lucrodolar %>% 
+        mutate(genero = str_split(genero, "\\, "),
+               elenco = str_split(elenco, "\\, "),
+               idioma = str_split(idioma, "\\, "),
+               pais = str_split(pais,"\\, "),
+               direcao = str_split(direcao,"\\, "),
+               roteiro = str_split(roteiro,"\\, "))
+      #    
         #    
         #    
         #    
@@ -443,15 +448,18 @@ glimpse(imdb)   # data_lancamento: está como character
           drop_na(mes) %>% 
           summarise(media_lucro = mean(lucro_mi, na.rm = TRUE)) %>% 
           ggplot(aes(y = media_lucro, x= mes)) +
-          geom_bar(stat = "identity", alpha = 1/2)+
+          geom_bar(stat = "identity", alpha = 1/2, color = "orange", fill="lightblue")+
           scale_y_continuous(labels = scales::dollar)+
           xlab("Mês")+
           ylab ("Lucro Médio (Milhões)")+
           meu_tema
           
+        # Checar se a diferença é significativa entre os meses
+        
+        
+        
         
         # Mês mais lucrativo dos gêneros mais lucrativo
-        # Não achei informativo
         imdb_lucrodolar_purr %>% 
           group_by(mes, genero) %>%
           unnest(genero) %>% 
