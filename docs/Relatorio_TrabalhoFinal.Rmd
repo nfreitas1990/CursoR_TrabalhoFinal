@@ -10,10 +10,13 @@ output:
 
 # **Ao produzir um filme, é possível adotar uma estratégia que atenda, simultaneamente, ambiciosos por fama e dinheiro ?**
 
+```{r}
+
+```
+
 ### Será que o retorno financeiro de um filme está associado a avaliação de qualidade que recebe pelos críticos?
 
 O IMDb *(Internet Movie Database)* é o maior banco de dados online sobre o cinema mundial. Contém informações sobre milhões de filmes e programas de TV e entreterimento.
-
 
 Utilizando a base de dados IMDd[^1], este relatório objetiva avaliar a existência de uma estratégia, em termos de produção de filmes, que atenda, simultaneamente, a necessidade de retorno financeiro de um investidor e fama para um cinestra.
 
@@ -40,7 +43,6 @@ library(purrr)
 library(stringr)
 
 ```
-
 
 ```{r include = FALSE, echo = FALSE, message=FALSE, warning=FALSE}
 # Preparação dos dados
@@ -130,23 +132,19 @@ imdb_lucrodolar <- imdb_lucrodolar %>%
                       panel.background = element_blank())
 ```
 
-
 ```{r include = FALSE, echo = FALSE, message=FALSE, warning=FALSE}
 total_filmes <- n_distinct(imdb$titulo)
 filmes_usados <-n_distinct(imdb_lucrodolar$titulo)
 ```
 
+## **Análises**
 
-
-## **Análises** 
-
-
-O banco de dados possui o total de **`r total_filmes` filmes**. Para as análises referente ao lucro dos filmes, apenas **`r filmes_usados`** foram utilizados. Isso ocorreu após a exclusão de filmes com valores *NAs* para receita ou orçamento e também da exclusão de filmes que os mesmos campos não eram em dólar, o que dificultaria comparações.
-
+O banco de dados possui o total de **`r total_filmes` filmes**. Para as análises referente ao lucro dos filmes, apenas **`r filmes_usados`** foram utilizados. Isso ocorreu após a exclusão de filmes com valores *NAs* para os campos *receita* ou *orçamento* e também da exclusão de filmes nos quais a moeda não estava em dólar, o que dificultaria comparações.
 
 ## Filmes mais lucrativos de todos os tempos
 
-Avatar e Avengers foram os filmes mais lucrativos de todos os tempos, lucrando mais de 2 bilhões de dólares cada um. Ultrapassando *Titanic*, que havia permanecido por anos como campeão de bilheterias.
+Avatar e Avengers foram os filmes mais lucrativos de todos os tempos, lucrando mais de 2 bilhões de dólares cada um. Ultrapassando *Titanic*, que havia permanecido por anos como campeão de bilheterias. Avatar deveria ter sido lançado em 1999, mas, segundo o diretor não existia ainda a tecnologia necessária para produzir o filme a partir de sua visão. Segundo a crítica, Avatar foi uma inovação em termos de tecnologia cinematográfica.
+
 ![](../inst/avatar.png)
 
 ```{r echo = FALSE, message=FALSE, warning=FALSE, fig.width = 7, fig.height = 6.5}
@@ -166,6 +164,8 @@ imdb_lucrodolar %>%
         meu_tema
 ```
 
+## Quais são os gêneros mais Lucrativos?
+
 Ao olharmos para o número de filmes lançados desde 1920, percebemos que a **maior quantidade** se concentra em gêneros de **Drama**, **Comédia** e **Ação**.
 
 ```{r echo = FALSE, message=FALSE, warning=FALSE, fig.width = 7, fig.height = 6.5}
@@ -183,10 +183,9 @@ Ao olharmos para o número de filmes lançados desde 1920, percebemos que a **ma
         
 ```
 
-Mas, embora estes gêneros possuam a maior quantidade de filmes lançados, não foram os gêneros mais lucrativos. O lucro médio foi maior para os gêneros de **Animação**, **Aventura**, **Ficção**, **Ação** e **Fantasia**.
+Embora estes gêneros possuam a maior quantidade de filmes lançados, não foram os gêneros mais lucrativos. O lucro médio foi maior para os gêneros de **Animação**, **Aventura**, **Ficção**, **Ação** e **Fantasia**.
 
-
-O que nos leva a inferir que a melhor estratégia, em termos de retorno financeiro, seria investir na produção dos gêneros que têm apresentado maior lucro médio ao longo de todo o período registrado.
+Portanto, podemos inferir que a melhor estratégia, em termos de retorno financeiro, seria investir na produção dos gêneros que têm apresentado maior lucro médio ao longo de todo o período registrado.
 
 ```{r include =  FALSE, echo = FALSE, message=FALSE, warning=FALSE}
 #Salvar o banco de dados para usar o purr
@@ -216,10 +215,92 @@ imdb_lucrodolar %>%
         
 ```
 
-E será que existe diferença no lucro médio dos filmes ao longo dos meses? 
+Ao longo dos meses, percebemos uma leve diferença no lucro médio dos filmes lançados.
 
+Os meses de Dezembro e Janeiro apresentaram o lucro médio ligeiramente maior quando comparado aos demais meses . Podemos, portanto, inferir que seriam meses interessantes para o lançamento de um filme, embora não tenhamos explorado o que levou a maior lucratividade desses meses.
 
-Os meses de Dezembro e Janeiro apresentaram maior lucro médio ao longo do tempo. Podemos, portanto, inferir que seriam meses interessantes para fazer o lançamento de um filme. 
+## Período de lançamento
+
+Com relação aos dias de lançamento, existe um padrão bastante evidente de lançamento no primeiro dia do mês.
+
+```{r echo = FALSE, message=FALSE, warning=FALSE, fig.width = 8, fig.height = 6}
+     
+      
+      imdb %>% 
+        select(titulo, ano, data_lancamento) %>% 
+        separate(col = data_lancamento,
+                 into = c("ano","mes","dia"),
+                 sep = "-") %>%
+        group_by(dia) %>% 
+        filter(!is.na(dia)) %>% 
+        summarise(n_titulo = n_distinct(titulo, na.rm = TRUE)) %>% 
+        
+        ggplot() +
+        geom_col(aes( y = n_titulo, x = dia),
+                 colour = "orange", fill = "lightblue") +
+        scale_x_discrete (name="Dias") +
+        scale_y_continuous(name="Número de títulos") +
+        meu_tema
+      
+```
+
+Podemos notar que o meio do ano (maio a agosto) houve uma baixa na quantidade de filmes lançados.
+
+```{r echo = FALSE, message=FALSE, warning=FALSE, fig.width = 6, fig.height = 6}
+
+      imdb %>% 
+        select(titulo, ano, data_lancamento) %>% 
+        separate(col = data_lancamento,
+                 into = c("ano","mes","dia"),
+                 sep = "-") %>%
+        group_by(mes) %>% 
+        filter(!is.na(mes)) %>% 
+        summarise(n_titulo = n_distinct(titulo, na.rm = TRUE)) %>% 
+        
+        ggplot() +
+        geom_col(aes( y = n_titulo, x = mes),
+                 colour = "orange", fill = "lightblue") +
+        scale_x_discrete (name="Mês") +
+        scale_y_continuous(name="Número de títulos") +
+        
+        labs(title = "Lançamento de Títulos")+
+        meu_tema
+      
+```
+
+Tendo em vista que as premiações de oscar acontecem no começo do ano, podemos inferir que o lançamento de um filme no mês de dezembro pode ser uma boa estratégia para que o filme esteja bem recente na cabeça dos avaliadores, mas isso é apenas uma especulação.
+
+Os dados dos gêneros mais lucrativos não necessariamente seguem a especulação acima. Pois os gêneros de *Ficção* e *Fantasia* o número de filmes lançados por mês quase não apresenta variação. Apenas os gêneros de *Animação* e *Aventura* que houve um aumento no mês de dezembro, comparado aos demais. Entretanto, cabe uma análise mais minuciosa para definir se esse aumento torna o mês de dezembro significativamente maior do que os demais.
+
+```{r echo = FALSE, message=FALSE, warning=FALSE, fig.width = 6, fig.height = 6}
+imdb_lucrodolar_purr %>% 
+           group_by(mes, genero) %>%
+           unnest(genero) %>% 
+           drop_na(mes) %>% 
+           summarise(contagem = n()) %>% 
+           filter(genero == "Animation"|
+                  genero == "Adventure"|
+                  genero == "Sci-Fi"|
+                  genero == "Fantasy") %>% 
+           ggplot(aes(y = contagem, x= mes, fill = genero, label = contagem)) +
+           geom_bar(stat = "identity")+
+           scale_fill_manual(values=c("#5B7694",
+                                      "#048ABF",
+                                        "#04B2D9",
+                                        "#07354D"))+
+           geom_label(position = position_stack (vjust = 0.9),alpha = 1/2, 
+                      colour = "lightgray", fontface = "bold", show_guide  = FALSE)+
+           #coord_flip()+
+           scale_y_continuous(breaks=NULL)+
+           xlab("Mês")+
+           ylab ("Número de filmes") +
+           
+           meu_tema+
+           theme(legend.position = "bottom")+
+           labs(fill = NULL)
+```
+
+## Período mais lucrativo
 
 ```{r echo = FALSE, message=FALSE, warning=FALSE, fig.width = 6, fig.height = 6}
 imdb_lucrodolar_purr %>% 
@@ -235,14 +316,11 @@ imdb_lucrodolar_purr %>%
         
 ```
 
+Olhando agora apenas para os gêneros mais lucrativos, dezembro foi um período com lucro médio bom para todos.
 
-Olhando agora apenas para os gêneros mais lucrativos, o período mensal mais propício para o lançamento se mantém?
+Além do mês de dezembro, para o gênero *Ficção* os meses de Abril a Julho também foram meses com lucro médio alto; para o gênero de *Fantasia* temos os meses de novembro a janeiro; para *Animação*, os meses de agosto a janeiro; para *Aventura*, o lucro médio não variou muito ao longo dos meses.
 
-
-Em Dezembro, todos os gêneros mantiveram os lucros médios altos. Além do mês de dezembro, para o gênero Ficção, os meses de Abril até Julho também foram meses com boa média de lucro; para o gênero Fantasia, novembro até janeiro; para Animação, os meses de agosto e novembro também obtiveram médias próximas a dezembro; para aventura, o lucro médio não variou ao longo dos meses. 
-
-
-```{r echo = FALSE, message=FALSE, warning=FALSE, fig.width = 7, fig.height = 6.5}
+```{r echo = FALSE, message=FALSE, warning=FALSE, fig.width = 6, fig.height = 6}
 imdb_lucrodolar_purr %>% 
           group_by(mes, genero) %>%
           unnest(genero) %>% 
@@ -255,12 +333,13 @@ imdb_lucrodolar_purr %>%
            ggplot(aes(y = media, x= mes, fill = genero, label = round(media,digits = 1))) +
            geom_bar(stat = "identity")+
             scale_fill_manual(values=c("#5B7694",
-                                       "#048ABF",
-                                       "#04B2D9",
-                                       "#07354D"))+
-           geom_label(position = position_stack (vjust = 0.5),alpha = 0.9, 
-                      colour = "lightgray", fontface = "bold",size=2.5, show_guide  = FALSE)+
-           coord_flip()+
+                                        "#048ABF",
+                                        "#04B2D9",
+                                        "#07354D"))+
+           geom_label(position = position_stack (vjust = 0.9),alpha = 1/2, 
+                      colour = "lightgray", fontface = "bold", show_guide  = FALSE)+
+           #coord_flip()+
+           scale_y_continuous(breaks=NULL)+
            xlab("Mês")+
            ylab ("Lucro Médio (Milhões)") +
            meu_tema+
@@ -269,11 +348,13 @@ imdb_lucrodolar_purr %>%
         
 ```
 
+Olhos mais atentos notam que para o gênero *Animação* houve um lucro médio muito acima das demais médias mensais no mês de Agosto. Existe um viés na média introduzido pelo lançamento de muitos filmes lucrativos de *Animação* neste mês.
 
-Olhos mais atentos notam que para o gênero animação houve um lucro médio muito acima das demais médias. Isso ocorreu devido
+Dos 20 filmes mais lucrativos do gênero *Animação*, de todo o período analisado, cinco foram lançados no mês de agosto, em anos distintos. Este fato faz com que o lucro médio desse mês seja bem maior do que a média de lucro dos outros meses.
 
+Abaixo, listamos os 20 filmes mais lucrativos do gênero *Animação* e sinalizamos com uma seta os que foram lançados em Agosto.
 
-```{r echo = FALSE, message=FALSE, warning=FALSE, fig.width = 7, fig.height = 6.5}
+```{r echo = FALSE, message=FALSE, warning=FALSE, fig.width = 8, fig.height = 7}
 imdb_lucrodolar_purr %>% 
           select(titulo_original, lucro_mi, genero) %>% 
           unnest(genero) %>%
@@ -285,8 +366,8 @@ imdb_lucrodolar_purr %>%
           xlab("Lucro (Milhões)")+
           ylab ("Títulos")+
           scale_x_continuous(labels = scales::dollar)+
-          annotate("text", x = 1250, y = 18, label = "2019", colour = "white", size = 5)+
-          annotate("text", x = 2200, y = 18, label = "1994", colour = "white", size = 5)+
+          annotate("text", x = 1100, y = 18, label = "2019", colour = "gray", size = 5)+
+          annotate("text", x = 2000, y = 18, label = "1994", colour = "gray", size = 5)+
           theme(plot.margin = margin(t = 20,  # Top margin
                                r = 50,  # Right margin
                                b = 40,  # Bottom margin
@@ -314,33 +395,569 @@ imdb_lucrodolar_purr %>%
 
 ```
 
+## Idiomas lucrativos
+
+Não é nenhuma novidade que o idioma com o maior lucro acumulado foi *Inglês*, seguido por Espanhol e Francês. O que claramente se relaciona com universalidade dos idiomas.
 
 ```{r echo = FALSE, message=FALSE, warning=FALSE}
+ imdb_lucrodolar_purr %>%
+          unnest(idioma) %>%
+          group_by(idioma) %>%
+          drop_na(idioma) %>% 
+          summarise(sum_lucro = sum(lucro_mi, na.rm = TRUE)) %>%
+          arrange(desc(sum_lucro)) %>%
+          slice_max(n=5, order_by = sum_lucro, with_ties = TRUE) %>% 
+          
+          ggplot(aes(y = fct_reorder(idioma, sum_lucro, .desc= F) , x = sum_lucro)) +
+          geom_bar(stat = "identity", alpha = 1/2, color = "orange", fill="lightblue")+
+          xlab("Lucro (Milhões)")+
+          ylab ("Idioma")+
+          scale_x_continuous(labels = scales::dollar)+
+          meu_tema
 ```
 
+## Duração dos Filmes lucrativos
 
-```{r echo = FALSE, message=FALSE, warning=FALSE}
+```{r echo = FALSE,include=FALSE,message=FALSE, warning=FALSE}
+duracao <- imdb_lucrodolar %>% 
+          select(titulo_original, lucro_mi, duracao) %>% 
+          arrange(desc(lucro_mi)) %>% 
+          slice_max(n=20, order_by = lucro_mi, with_ties = TRUE) %>% 
+          summarise(media = mean(duracao))
+          
 ```
 
+A média de duração dos 20 filmes mais lucrativos foi de `r duracao` minutos.
 
-```{r echo = FALSE, message=FALSE, warning=FALSE}
+## Lucro *vs* Nota Imdb
+
+```{r echo = FALSE, message=FALSE, warning=FALSE, include=FALSE}
+correl <- cor.test(imdb_lucrodolar$lucro_mi, imdb_lucrodolar$nota_imdb, method="spearman")
+correlacao <- correl$estimate
 ```
 
+O lucro do filme tem relação com a nota IMDb recebida pelos telespectadores? A resposta é "Muito pouco". Existe um correlação baixa entre o lucro e a nota IMDb (`r correlacao`). Isso significa que um filme lucrativo não necessariamente teve uma boa avaliação no IMDb.
 
 ```{r echo = FALSE, message=FALSE, warning=FALSE}
+
+        imdb_lucrodolar %>% 
+          ggplot(aes(x = nota_imdb, y = lucro_mi))+
+          geom_point(size=2, shape=16, stroke=2, alpha=1, color = "orange")+
+          geom_smooth(method="lm")+
+          xlab("Nota IMDb")+
+          ylab ("Lucro (Milões)")+
+          scale_y_continuous(labels = scales::dollar)+
+          meu_tema+
+          annotate("text", x = 3, y = 2000, label = "r=0.28; p-value <2.2e-16",
+                   colour = "black", size = 5)
 ```
 
+## Diretores Lucrativos
+
+Abaixo, os 10 diretores com maior lucratividade
 
 ```{r echo = FALSE, message=FALSE, warning=FALSE}
+imdb_lucrodolar_purr %>%
+            select(titulo, lucro_mi, direcao, genero) %>% 
+            unnest(direcao) %>% 
+            group_by(direcao) %>% 
+            summarise(med_lucro = mean(lucro_mi, na.rm = TRUE)) %>% 
+            arrange(desc(med_lucro)) %>% 
+            slice_max(n=10, med_lucro) %>% 
+            knitr::kable(col.names = c("Direção", "Lucro Médio (Milhoes)"), digits = 1)
 ```
 
+Dentre os diretores mais lucrativos, podemos notar que James Cameron, Joe Russo e Anthony Russo são mais ecléticos quanto ao tipo de filme produzido, com filmes que se encaixam em diferentes gêneros. Os demais diretores tem seus filmes enquadrados, principalmente, nos gêneros de Ação, Aventura e Animação.
 
 ```{r echo = FALSE, message=FALSE, warning=FALSE}
+   imdb_lucrodolar_purr %>% 
+        select(titulo, direcao, genero) %>%
+        unnest(direcao) %>%
+        filter(direcao == as.character("Jennifer Lee")|
+               direcao == as.character("Anthony Russo")|
+               direcao == as.character("Joe Russo")|
+               direcao == as.character("Josh Cooley")|
+               direcao == as.character("Pierre Coffin")|
+                 direcao == as.character("Jing Wu")|
+                 direcao == as.character("Angus MacLane")|
+                 direcao == as.character("Lee Unkrich")|
+                 direcao == as.character("James Cameron")) %>% 
+        unnest(genero) %>% 
+        group_by(direcao, genero) %>% 
+        summarise(contagem = length(genero)) %>%
+        
+        ggplot(aes(y= fct_reorder(direcao, genero),
+                   x= contagem, fill= genero, label= contagem))+
+          geom_bar(stat = "identity")+
+          scale_fill_brewer(palette="Spectral")+
+          xlab("Número de filmes por categoria")+
+          ylab ("Direção") + 
+          scale_x_continuous(breaks=NULL)+
+          geom_label(position = position_stack (vjust = 0.2),alpha = 0.65, 
+                 colour = "white", fontface = "bold", show_guide  = FALSE)+
+          meu_tema +
+          theme(legend.position = "bottom")+
+          labs(fill = NULL)
 ```
 
+Caso um investidor queira contratar um diretor para produzir um filme dos 5 gêneros mais lucrativos (Animacao \| Aventura \| Ficcao \| Acao \| Fantasia). Poderia contratar um diretor que tenha tido uma boa média de lucro nos seus filmes. E decidir , dependendo do tipo de filme que deseja, por um diretor mais eclético ou direcionado para o gênero desejado.
 
-```{r echo = FALSE, message=FALSE, warning=FALSE}
+## Conclusões sobre a lucratividade
+
+-   Os gêneros mais lucrativos foram: **Animacao \| Aventura \| Ficcao \| Acao \| Fantasia**;
+
+-   Os meses mais lucrativos foram: **Dezembro** e **Janeiro;**
+
+-   Os filmes mais lucrativos possuíam lingua **Inglesa**;
+
+-   Em média, os filmes mais lucrativos duram **137 min** (aproximadamente 2h e 20 min);
+
+-   No meio do ano (maio a agosto) temos uma baixa na quantidade de filmes lançados. O número de filmes lançados é maior no final do ano e começo;
+
+-   Os filmes são lancados, em geral, no primeiro dia do mês;
+
+-   O mês de **Dezembro** resultou em um alto lucro médio para os cinco gêneros mais lucrativos (**Animacao \| Aventura \| Ficcao \| Acao \| Fantasia**);
+
+-   Sci-Fi - Meses mais lucrativos: Abril até Julho e o mes de Dezembro;
+
+-   Fantasia - Meses mais lucrativos: Novembro, Dezembro e Janeiro;
+
+-   Animação - Meses mais lucrativos: Agosto e Dezembro;
+
+-   Aventura: não houve diferenças ao longo do ano;
+
+    ## Melhores Filmes de todos os tempos
+
+    Abaixo , podemos visualizar os 10 filmes com maior número de avaliação. Por terem tido muitas avaliações, podemos inferir que são filmes populares. O mais popular foi o filme **Um Sonho de Liberdade**, 1994, indicado para sete Oscars em 1995.
+
+    ```{r include=FALSE, echo = FALSE, message=FALSE, warning=FALSE}
+     extrair_decada <- function(ano) {return(ano - ano %% 10)}
+          
+     imdb_decada <-   imdb %>% 
+                        mutate(genero = str_split(genero, "\\, "),
+                               elenco = str_split(elenco, "\\, "),
+                               idioma = str_split(idioma, "\\, "),
+                               pais = str_split(pais,"\\, "),
+                               direcao = str_split(direcao,"\\, "),
+                               roteiro = str_split(roteiro,"\\, ")) %>% 
+                        mutate(ano = as.double(year(data_lancamento))) %>% 
+                        mutate(decada = extrair_decada(ano)) %>% 
+                        select(-c (moeda_orcamento,moeda_receita,moeda_receita_eua,orcamento,receita,receita_eua)) 
+     
+     imdb_decada <-  imdb_decada %>% 
+                       unnest(genero) %>% 
+                       filter(genero != "Documentary" &
+                              genero != "Reality-TV" &
+                              genero!= "News"&
+                              genero != "Adult") %>% 
+                       select(id_filme,titulo_original, decada,genero,data_lancamento, ano)
+     
+     imdb_decada <- inner_join(imdb_decada, imdb_avaliacoes, by = "id_filme") 
+
+    ```
+
+```{r echo = FALSE, message=FALSE, warning=FALSE,fig.width = 7, fig.height = 6}
+ imdb_decada %>% 
+            nest(genero) %>% 
+            select(titulo_original, num_avaliacoes, nota_media_ponderada) %>%
+            arrange(desc(num_avaliacoes)) %>% 
+            slice_max(n=10, order_by = num_avaliacoes, with_ties = TRUE) %>% 
+            ggplot(aes(x = fct_reorder(titulo_original, num_avaliacoes, .desc = F),
+                       y = num_avaliacoes, label= num_avaliacoes))+
+              geom_bar(stat = "identity", color = "orange", fill= "lightblue")+
+              coord_flip()+
+              xlab("Filmes")+
+              ylab ("Número de Avaliações") +
+              scale_y_continuous (breaks=NULL)+
+              geom_label(position = position_stack (vjust = 0.9),alpha = 0.8, 
+                         colour = "lightblue", fontface = "bold", show_guide  = FALSE)+
+              meu_tema
 ```
 
+Entretanto, ser popular não garante que foram os filmes melhor avaliados. Segundo a média IMDb ponderada pelo número de avaliações, os melhores filmes de todos os tempos, são:
+
+```{r echo = FALSE, message=FALSE, warning=FALSE,fig.width = 7, fig.height = 6}
+imdb_decada %>%
+            nest(genero) %>% 
+            select(titulo_original, nota_media_ponderada, ano) %>% 
+            arrange(desc(nota_media_ponderada)) %>% 
+            slice_max(n=10, order_by = nota_media_ponderada, with_ties = TRUE) %>% 
+              ggplot(aes(x = fct_reorder(titulo_original, nota_media_ponderada, .desc = F),
+                       y = nota_media_ponderada, label= nota_media_ponderada))+
+            geom_bar(stat = "identity", color = "orange", fill= "lightblue")+
+            coord_flip()+
+            xlab("Filmes")+
+            ylab ("Nota IMDB") +
+            scale_y_continuous (breaks=NULL)+
+            geom_label(position = position_stack (vjust = 0.9),alpha = 0.8, 
+                       colour = "lightblue", fontface = "bold", show_guide  = FALSE)+
+            meu_tema
+```
+
+Quando separamos os **melhores** filmes por **década**, obtemos:
+
+```{r include=FALSE, echo = FALSE, message=FALSE, warning=FALSE,fig.width = 7, fig.height = 6}
+graf_decada <- function(tab){
+                    tab %>%
+                      nest(genero) %>% 
+                      arrange(desc(nota_media_ponderada)) %>% 
+                      slice_max(n=10,order_by = nota_media_ponderada, with_ties = TRUE)%>% 
+                        
+                      ggplot()+
+                        aes(fct_reorder(titulo_original, nota_media_ponderada, .desc = F),
+                                        y = nota_media_ponderada, 
+                                        label = nota_media_ponderada )+
+                        geom_bar(stat = "identity", color = "orange", fill= "lightblue")+
+                        coord_flip()+
+                        #ggtitle(rownames(decada))+
+                        #theme(plot.title = element_text(size = 20, color = "orange", face = "bold"))+
+                        xlab("Filmes")+
+                        ylab ("Nota IMDB") +
+                        geom_label(position = position_stack (vjust = 0.9),alpha = 0.8, 
+                                    colour = "lightblue", fontface = "bold", show_guide  = FALSE)+
+                        meu_tema+
+                        theme(legend.title = tab$decada)+
+                        scale_y_continuous (n.breaks = 10)
+                            
+}
+
+imdb_graf_decada <-   imdb_decada %>%
+                        drop_na(decada) %>%
+                        group_by(decada) %>%
+                        nest() %>% 
+                        filter(decada >1910) %>% 
+                        arrange(desc(decada)) %>% 
+                        mutate(
+                          grafico = map(data,graf_decada))
+```
+
+### Década: 2020
+
+```{r echo = FALSE, message=FALSE, warning=FALSE,fig.width = 7, fig.height = 6}
+          
+imdb_graf_decada %>%           
+      pluck('grafico', 1)
+```
+
+### Década: 2010
+
+```{r echo = FALSE, message=FALSE, warning=FALSE,fig.width = 7, fig.height = 6}
+imdb_graf_decada %>%           
+  pluck('grafico', 2)
+```
+
+### Década: 2000
+
+```{r echo = FALSE, message=FALSE, warning=FALSE, fig.width = 7, fig.height = 6}
+imdb_graf_decada %>%           
+  pluck('grafico', 3)
+```
+
+### Década: 1990
+
+```{r echo = FALSE, message=FALSE, warning=FALSE, fig.width = 7, fig.height = 6}
+imdb_graf_decada %>%           
+  pluck('grafico', 4)
+```
+
+## Melhores Gêneros
+
+Na década de 2020, o gênero melhor avaliado foi **Animação** e **Biografia**.
+
+```{r echo = FALSE, message=FALSE, warning=FALSE, fig.width = 7, fig.height = 6}
+  # 2020
+  imdb_decada %>%
+          drop_na(decada) %>%
+          filter(decada ==2020) %>% 
+          group_by(genero) %>% 
+          summarise(media = mean(nota_media_ponderada)) %>% 
+          arrange(desc(media)) %>% 
+            ggplot()+
+            aes(fct_reorder(genero, media, .desc = F),
+                y = media, 
+                label = round(media, digits = 2))+
+            coord_flip()+
+            geom_bar(stat = "identity", fill= "lightblue", color = "orange")+
+            geom_label(position = position_stack (vjust = 0.9),alpha = 0.8, 
+                               colour = "lightblue", fontface = "bold", show_guide  = FALSE)+
+            ggtitle("Década: 2020")+
+            theme(plot.title = element_text(size = 20, color = "orange", face = "bold"))+
+            labs(x = "Gêneros",
+                 y = "Nota Média - IMDB")+
+            meu_tema
+  
+  
+```
+
+Ao considerarmos todo o período de 2000 até 2020, temos uma modifcação nos gêneros melhor avaliados. Os gêneros **Biografia**, **Guerra**, **Histótia** e **Animação** ganham destaque.
+
+```{r echo = FALSE, message=FALSE, warning=FALSE, fig.width = 7, fig.height = 7}
+imdb_decada %>%
+    drop_na(decada) %>%
+    filter(decada >=2000) %>% 
+    group_by(genero) %>% 
+    ggplot()+
+    aes(fct_reorder(genero, nota_media_ponderada, .desc = F),
+        y = nota_media_ponderada)+
+    coord_flip()+
+    geom_boxplot(fill= "lightblue", color = "orange", outlier.colour = "lightgray", outlier.size = 1)+
+    ggtitle("Década: 2000 - 2020")+
+    theme(plot.title = element_text(size = 20, color = "orange", face = "bold"))+
+    ylab("Nota IMDB")+
+    xlab ("Gêneros") +
+    meu_tema
+```
+
+## Gêneros mais populares
+
+Os gêneros com maior número de avaliação, mais populares, foram **Ficção**, **Aventura**, **Animação** e **Biografia**.
+
+```{r echo = FALSE, message=FALSE, warning=FALSE, fig.width = 7, fig.height = 7}
+      imdb_decada %>% 
+        select(titulo_original, num_avaliacoes, genero) %>%
+        group_by(genero) %>% 
+        summarise(media = mean(num_avaliacoes)) %>% 
+        arrange(desc(media)) %>% 
+        slice_max(n=10, order_by = media, with_ties = TRUE) %>% 
+        ggplot(aes(x = fct_reorder(genero, media, .desc = F),
+                   y = media, label= round(media, digits = 1)))+
+        geom_bar(stat = "identity", color = "orange", fill= "lightblue")+
+        coord_flip()+
+        xlab("Filmes")+
+        ylab ("Número Médio de Avaliações") +
+        scale_y_continuous (breaks=NULL)+
+        geom_label(position = position_stack (vjust = 0.9),alpha = 0.9, 
+                   colour = "lightblue", fontface = "bold", show_guide  = FALSE)+
+        meu_tema
+      
+```
+
+## Gêneros lucrativos e populares
+
+Ao considerarmos **apenas os gêneros mais lucrativos**, notamos que, neste caso, o gênero **Animação** se destaca com **maior** média de nota IMDb.
+
+*Considerando o período de 2000 até 2020*, o gênero **Animação** tem a maior média IMDb do que os gêneros **Ação** e **Fantasia** (que não se diferenciam entre si), ficando o gênero **Ficção** com a menor média.
+
+```{r echo = FALSE, message=FALSE, warning=FALSE, fig.width = 7, fig.height = 7}
+genero_anova <-  imdb_decada %>%
+    drop_na(decada) %>%
+    filter(decada >=2000) %>% 
+    filter(genero== "Animation"|
+           genero=="Sci-Fi"|
+           genero=="Adventura"|
+           genero=="Action"|
+           genero=="Fantasy") %>% 
+    select(titulo_original, nota_media, nota_media_ponderada, genero)
+ 
+ ggplot(genero_anova)+
+   aes(fct_reorder(genero, nota_media_ponderada, .desc = F),
+       y = nota_media_ponderada)+
+   geom_boxplot(fill= "lightblue", color = "orange", outlier.colour = "lightgray",outlier.size = 1)+
+   xlab("Gêneros")+
+   ylab ("Nota IMDB") +
+   meu_tema
+```
+
+*Considerando apenas a* *década de 2020*, o gênero **Animação** obteve a maior média de Nota IMDb, enquanto os demais gêneros não se difereciam entre si em termos de notas. Ou seja, de acordo com as análises (Anova e Pós-teste de Tukey), não podemos afirmar que entre os gêneros Ação, Fantasia e Ficção exista diferenças significativa entre as notas IMDb obtidas.
+
+## Melhores Gêneros em cada década
+
+```{r include=FALSE,echo = FALSE, message=FALSE, warning=FALSE}
+ graf_gen_por_decada <- function(tab){
+                              tab %>%
+                                  arrange(desc(nota_media_ponderada)) %>% 
+                                  group_by(genero) %>% 
+                                  summarise(media = mean(nota_media_ponderada)) %>% 
+                                  slice_max(n=10,order_by = media, with_ties = TRUE)%>% 
+                                    ggplot()+
+                                      aes(fct_reorder(genero, media, .desc = F),
+                                      y = media, 
+                                      label = round(media, digits = 2))+
+                                      geom_bar(stat = "identity", color = "orange", fill= "lightblue")+
+                                      coord_flip()+
+                                      xlab("Gêneros")+
+                                      ylab ("Nota Média IMDB") +
+                                      geom_label(position = position_stack (vjust = 0.9),alpha = 0.8, 
+                                                 colour = "lightblue", 
+                                                 fontface = "bold", show_guide  = FALSE)+
+                                      meu_tema +
+                                      scale_y_continuous (n.breaks = 10)
+ }
+ 
+ imdb_genero_decada  <-   imdb_decada %>%
+                            drop_na(decada) %>%
+                            group_by(decada) %>%                      
+                            nest() %>%                       
+                            filter(decada >1910) %>% 
+                            arrange(desc(decada)) %>% 
+                            mutate(grafico = map(data,graf_gen_por_decada)) 
+```
+
+Os gêneros **Animação**, **Biografia** e **História** estão entre os 5 gêneros com maior média IMDb em todas as décadas desde 1960. O gênero **Animação** esteve entre os cinco com maior nota média IMDb em todas as décadas desde 1930. Segue o gráfico das últimas três décadas.
+
+### Década: 2020
+
+```{r echo = FALSE, message=FALSE, warning=FALSE, fig.width = 7, fig.height = 7}
+imdb_genero_decada %>%           
+        pluck('grafico', 1)
+```
+
+### Década: 2010
+
+```{r echo = FALSE, message=FALSE, warning=FALSE, fig.width = 7, fig.height = 7}
+
+      imdb_genero_decada %>%           
+        pluck('grafico', 2)
+```
+
+### Década: 2000
+
+```{r echo = FALSE, message=FALSE, warning=FALSE, fig.width = 7, fig.height = 7}
+#2000
+      imdb_genero_decada %>%           
+        pluck('grafico', 3)
+```
+
+## Média IMDb dos gêneros mais lucrativos ao longo das décadas
+
+Olhando para a média das notas IMDb ao longo das décadas podemos notar que os gêneros Família, Fantasia, Ação e Ficção eram mais populares no período de 1920-1940 do que foram no perído de 2000-2020, pois tiveram quedas nas notas médias nos períodos mais recentes quando comparado ao ínicio do período de registro.
+
+O gênero de Guerra obteve médias altas (acima de 6) ao longo das décadas, no entanto, notamos uma perda de popularidade neste gênero a partir de 2000, onde há uma queda na nota média registrada.
+
+Os gêneros Biografia, Animação e História se mantiveram com boas médias ao longo das décadas analisadas. Nas últimas três décadas notamos uma leve queda nas médias, embora a década de 2020 ainda esteja iniciando, o que não o equipara às demais décadas representadas.
+
+```{r echo = FALSE, message=FALSE, warning=FALSE, fig.width = 8, fig.height = 8}
+ imdb_decada %>%
+        filter(decada>1910) %>% 
+        filter(genero == "Animation"|
+               genero == "History"|
+                 genero == "Family"|
+                 genero == "Fantasy"|
+                 genero == "Animation"|
+                 genero == "War"|
+                 genero == "Biography"|
+                 genero == "Sci-Fi"|
+                 genero == "Action") %>% 
+        group_by(genero, decada) %>% 
+        summarise(media = mean(nota_media_ponderada)) %>% 
+        ggplot(aes(x= decada,y = media,label = genero, color = genero))+
+        geom_line(size= 1)+
+        geom_point(size= 2)+
+        xlab("Década")+
+        ylab ("Nota Média IMDB") +
+        scale_x_continuous(breaks=seq(1920, 2100, 10))+
+        scale_y_continuous(breaks=seq(0, 10, 0.5))+
+        scale_colour_manual(values = c("Animation" = "#004586", "Action" = "#ff420e", "Biography" = "#ffd320", "Family" = "#579d1c", "Fantasy" = "#990099", "History"="#99CC33", "Sci-Fi"="#3333CC","War"="#33CCCC"))+
+        
+        meu_tema +
+        theme(panel.grid.major.y = element_line(color = "lightgray",
+                                                size = 0.5,
+                                                linetype = 2),
+              plot.margin = margin(t = 20,  # Top margin
+                                   r = 50,  # Right margin
+                                   b = 40,  # Bottom margin
+                                   l = 10),
+              panel.border = element_blank())+ # Left margin)
+        annotate("text", x = 2028, y = 6.4, label = "Biography", colour = "#ffd320", size = 5)+
+        annotate("text", x = 2028, y = 6.3, label = "Animation", colour = "#004586", size = 5)+
+        annotate("text", x = 2028, y = 6.1, label = "History", colour = "#99CC33", size = 5)+
+        annotate("text", x = 2028, y = 5.8, label = "War", colour = "#33CCCC", size = 5)+
+        annotate("text", x = 2028, y = 5.7, label = "Family", colour = "#579d1c", size = 5)+
+        annotate("text", x = 2028, y = 5.6, label = "Fantasy", colour = "#990099", size = 5)+
+        annotate("text", x = 2028, y = 5.3, label = "Action", colour = "#ff420e", size = 5)+
+        annotate("text", x = 2028, y = 5.0, label = "Sci-Fi", colour = "#3333CC", size = 5)
+        
+      
+    
+```
+
+## Conclusão sobre a popularidade e qualidade dos filmes
+
+-   *Década 2000-2020*: gêneros com **maior nota IMDb** foram **Biografia**, **Guerra**, **História**, **Animação** e **Música**;
+
+-   *Década 2020*: gêneros com **maior nota IMDb** foram **Animação** e **Biografia;**
+
+-   Ao considerarmos **apenas os gêneros mais lucrativos**, gênero **Animação** se destaca com **maior** média de nota IMDb, no perído de 2000-2020;
+
+-   **Ficção**, **Aventura**, **Animação**, **Biografia** e **Fantasia** foram os gêneros com maior número de avaliações de todos os tempos, ou seja, gêneros mais populares;
+
+-   Os gêneros **Animação**, **Biografia** e **História** estão entre os 5 gêneros com **maior média IMDb** em todas as décadas desde 1960;
+
+-   O gênero **Animação**, desde 1930, está entre as cinco com maiores nota média IMDb, ou seja, entre os gêneros melhor avaliados;
+
+# Conclusão Geral
+
+Como vimos, o retorno financeiro de um filme não está, necessariamente, associado a avaliação de qualidade. Pois filmes com alto retorno financeiro, nem sempre foram os filmes com altas médias IMDb.
+
+No entanto, com base nas análises descritivas realizadas podemos fazer algumas suposições.
+
+O ideal para garantir uma boa lucratividade, seguindo as tendências observadas, seria investir em filmes dos gêneros **Animação, Aventura, Ficção, Ação ou Fantasia**. Os filmes devem ser produzidos em lingua inglesa e ter em média 2 horas e 20 minutos de duração. O lançamento deve ser programado para o final do ano e ocorrer no primeiro dia do mês escolhido.
+
+O ideal para garantir uma boa popularidade seria produzir filmes do gênero **Ficção**, **Aventura**, **Animação**, **Biografia** e **Fantasia** que receberam o maior número de avaliações ao longo do período avaliado. Os gêneros que têm sido melhor avaliados pelos espectadores são: **Biografia**, **Guerra**, **História**, **Animação** e **Música**. E na última década o gênero **Animação** e **Biografia**, que pode significar apenas que foram lançados ótimos filmes desse gênero no perído de 2020, ou então, que estes gêneros ganharam um pouco mais de popularidade neste últimos anos.
+
+#### ***Mas afinal, podemos investir em um gênero de filme que garanta lucratividade e popularidade?***
+
+É claro que as análises aqui foram superficiais e descritivas, então temos que ser cuidadosos. Mas, acredito que a resposta seja "Sim". O gênero de **Animação** está entre os mais populares, recebendo avaliações de qualidade que o coloca entre os cinco melhores gêneros analisados em todas as décadas desde 1930. Além disso, este gênero está entre os mais lucrativos de todo o período analisado.
+
+Neste caso, ao adotar este gênero, o tempo de duração dos filmes deve ser reduzido. A média para o gênero fica em torno 1,5h provavelmente devido aos efeitos especiais, que são onerosos.
+
+Para o investidor, é interessante ainda que ele opte por diretores, roteiristas e estúdios que têm tido sucesso financeiro em produzir filmes desse gênero.
+
+As listas fornecidas abaixo, pode ser um palpite.
+
+### Roteiro
+
+```{r include=FALSE, echo = FALSE, message=FALSE, warning=FALSE}
+ 
+imdb_animacao <-  imdb_lucrodolar_purr %>%
+                          unnest(genero) %>% 
+                          filter(genero == "Animation")
+
+teste1 <- imdb_animacao %>% 
+        unnest(roteiro) %>% 
+        group_by(roteiro) %>%
+        summarise(media = mean(lucro_mi)) %>% 
+        arrange(desc(media))  
+        
+      #roteirista - fama
+teste2 <-   imdb_animacao %>% 
+        unnest(roteiro) %>% 
+        group_by(roteiro) %>% 
+        summarise(media = mean(nota_imdb)) %>% 
+        arrange(desc(media))  
+        
+      
+      # 
+    roteiro <- inner_join(teste1, teste2, by = "roteiro") 
+```
 
 ```{r echo = FALSE, message=FALSE, warning=FALSE}
+roteiro %>% 
+      slice_max(order_by = media.x, n=10) %>% 
+      select(roteiro, media.x) %>% 
+      knitr::kable(col.names = c("Roteiro", "Lucro Médio (Milhoes)"), digits = 1)
+```
+
+### Direção
+
+```{r echo = FALSE, message=FALSE, warning=FALSE}
+      imdb_animacao %>% 
+        unnest(direcao) %>% 
+        group_by(direcao) %>% 
+        summarise(media = mean(lucro_mi)) %>% 
+        arrange(desc(media)) %>% 
+        slice_max(n=10, order_by = media, with_ties = TRUE) %>% 
+          knitr::kable(col.names = c("Direção", "Lucro Médio (Milhoes)"), digits = 1)
+```
+
+### Estúdios
+
+```{r echo = FALSE, message=FALSE, warning=FALSE}
+imdb_animacao %>% 
+        group_by(producao) %>% 
+        summarise(media = mean(lucro_mi)) %>% 
+        arrange(desc(media)) %>% 
+        slice_max(n=10, order_by = media, with_ties = TRUE) %>% 
+        knitr::kable(col.names = c("Estúdios", "Lucro Médio (Milhoes)"), digits = 1)
+        
+```

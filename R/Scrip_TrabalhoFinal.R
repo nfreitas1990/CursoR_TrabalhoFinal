@@ -471,15 +471,16 @@ glimpse(imdb)   # data_lancamento: está como character
                      genero == "Fantasy") %>% 
            ggplot(aes(y = media, x= mes, fill = genero, label = round(media,digits = 1))) +
            geom_bar(stat = "identity")+
-            scale_fill_manual(values=c("#E62634",
-                                       "#009847",
-                                       "#EF9A03",
-                                       "#2A2961"))+
-           geom_label(position = position_stack (vjust = 0.5),alpha = 1/2, 
+            scale_fill_manual(values=c("#5B7694",
+                                        "#048ABF",
+                                        "#04B2D9",
+                                        "#07354D"))+
+           geom_label(position = position_stack (vjust = 0.9),alpha = 1/2, 
                       colour = "lightgray", fontface = "bold", show_guide  = FALSE)+
-           coord_flip()+
+           #coord_flip()+
            xlab("Mês")+
            ylab ("Lucro Médio (Milhões)") +
+            scale_y_continuous(breaks=NULL)+
            meu_tema+
            theme(legend.position = "bottom")+
            labs(fill = NULL)
@@ -576,10 +577,10 @@ glimpse(imdb)   # data_lancamento: está como character
                   genero == "Fantasy") %>% 
            ggplot(aes(y = contagem, x= mes, fill = genero, label = contagem)) +
            geom_bar(stat = "identity")+
-           scale_fill_manual(values=c("#E62634",
-                                      "#009847",
-                                      "#EF9A03",
-                                      "#2A2961"))+
+           scale_fill_manual(values=c("#5B7694",
+                                      "#048ABF",
+                                      "#04B2D9",
+                                      "#07354D"))+
            geom_label(position = position_stack (vjust = 0.9),alpha = 1/2, 
                       colour = "lightgray", fontface = "bold", show_guide  = FALSE)+
            #coord_flip()+
@@ -606,7 +607,7 @@ glimpse(imdb)   # data_lancamento: está como character
           slice_max(n=5, order_by = sum_lucro, with_ties = TRUE) %>% 
           
           ggplot(aes(y = fct_reorder(idioma, sum_lucro, .desc= F) , x = sum_lucro)) +
-          geom_bar(stat = "identity", alpha = 1/2)+
+          geom_bar(stat = "identity", alpha = 1/2, color = "orange", fill="lightblue")+
           xlab("Lucro (Milhões)")+
           ylab ("Idioma")+
           scale_x_continuous(labels = scales::dollar)+
@@ -630,7 +631,16 @@ glimpse(imdb)   # data_lancamento: está como character
         # duracao media dos filmes que lucraram mais de 10%: 109min
         
         
+#6        # Qual é a duração média dos filmes lucrativos
+        
+        imdb_lucrodolar %>% 
+          select(titulo_original, lucro_mi, duracao) %>% 
+          arrange(desc(lucro_mi)) %>% 
+          slice_max(n=20, order_by = lucro_mi, with_ties = TRUE) %>% 
+          summarise(media = mean(duracao))
           
+          
+        
         # CONCLUSÃO: 1. Os 5 gêneros mais lucrativos: Animacao | Aventura | Ficcao | Acao | Fantasia 
         #            2. Os 5 gêneros mais produzidos: Drama | Comédia | Acao | Crime | Aventura
         #            3. Dezembro e Janeiro foram os meses mais lucrativos
@@ -643,6 +653,9 @@ glimpse(imdb)   # data_lancamento: está como character
         #                     Animação: Agosto (por conta dos filmes 3 filmes q estão entre os mais lucrativos do gênero)
         #                     Aventura: foi bom ao longo do ano
 
+        
+        
+        
         
 #5.     #Existe relação entre o retorno financeiro e a nota imdb?             
      
@@ -659,10 +672,18 @@ glimpse(imdb)   # data_lancamento: está como character
           
         # voltei para o jeito velho. rs
         cor.test(imdb_lucrodolar$lucro_mi, imdb_lucrodolar$nota_imdb, method="spearman") #sem pressuposto
+        
+        
         imdb_lucrodolar %>% 
           ggplot(aes(x = nota_imdb, y = lucro_mi))+
-          geom_point(size=2, shape=16, stroke=2, alpha=1)+
-          geom_smooth(method="lm")
+          geom_point(size=2, shape=16, stroke=2, alpha=1, color = "orange")+
+          geom_smooth(method="lm")+
+          xlab("Nota IMDb")+
+          ylab ("Lucro (Milões)")+
+          scale_y_continuous(labels = scales::dollar)+
+          meu_tema+
+          annotate("text", x = 3, y = 2000, label = "r=0.28; p-value <2.2e-16",
+                   colour = "black", size = 5)
           
         
 # CONCLUSÃO: Existe um baixa correlação entre o lucro e a nota do imdb (0.28), como eu supunha inicial. Então, para o retorno financeiro nao interessa a nota recebida pelo público. Pois um filme bem avaliado pelo público não necessariamente teve otimo retorno financeiro.
@@ -702,7 +723,11 @@ glimpse(imdb)   # data_lancamento: está como character
                direcao == as.character("Anthony Russo")|
                direcao == as.character("Joe Russo")|
                direcao == as.character("Josh Cooley")|
-               direcao == as.character("Pierre Coffin")) %>% 
+               direcao == as.character("Pierre Coffin")|
+                 direcao == as.character("Jing Wu")|
+                 direcao == as.character("Angus MacLane")|
+                 direcao == as.character("Lee Unkrich")|
+                 direcao == as.character("James Cameron")) %>% 
         unnest(genero) %>% 
         group_by(direcao, genero) %>% 
         summarise(contagem = length(genero)) %>%
@@ -714,6 +739,7 @@ glimpse(imdb)   # data_lancamento: está como character
           xlab("Número de filmes por categoria")+
           ylab ("Direção") + 
           scale_x_continuous(breaks=NULL)+
+          scale_color_identity()+
           geom_label(position = position_stack (vjust = 0.2),alpha = 0.65, 
                  colour = "white", fontface = "bold", show_guide  = FALSE)+
           meu_tema +
@@ -735,8 +761,7 @@ glimpse(imdb)   # data_lancamento: está como character
             
  # Joe Russo e Anthony Russo são mais ecléticos, seus filmes se encaixam em diferentes categorias de filmes. Já Jennifer Lee, Josh Cooley e Pierre Coffin os filmes se encaiam em animação, comédia e aventura.          
           
-     
-
+      
    
  # ---------------------------------
       
@@ -942,6 +967,11 @@ imdb_graf_decada %>%
 imdb_graf_decada %>%           
   pluck('grafico', 4)
 
+#Não consegui combinar os gráfico em uma mesma tela
+
+
+
+
 
 #3       Quais os generos com maior nota imdb? 
         
@@ -1107,7 +1137,25 @@ imdb_graf_decada %>%
         meu_tema
       
       
+      # Quais foram os gêneros com maior num avaliação a partir de 2000
       
+      imdb_decada %>% 
+        select(titulo_original, num_avaliacoes, genero, decada) %>%
+        group_by(genero) %>% 
+        filter(decada >= 2000) %>% 
+        summarise(media = mean(num_avaliacoes)) %>% 
+        arrange(desc(media)) %>% 
+        slice_max(n=10, order_by = media, with_ties = TRUE) %>% 
+        ggplot(aes(x = fct_reorder(genero, media, .desc = F),
+                   y = media, label= round(media, digits = 1)))+
+        geom_bar(stat = "identity", color = "orange", fill= "lightblue")+
+        coord_flip()+
+        xlab("Filmes")+
+        ylab ("Número Médio de Avaliações") +
+        scale_y_continuous (breaks=NULL)+
+        geom_label(position = position_stack (vjust = 0.9),alpha = 0.9, 
+                   colour = "lightblue", fontface = "bold", show_guide  = FALSE)+
+        meu_tema
   
       
  #5     Quais os generos com maior nota imdb por decada? 
@@ -1241,24 +1289,10 @@ imdb_genero_decada  <-   imdb_decada %>%
   # CONCLUSÃO:  
       # FICÇÃO|ACAO|FANTASIA| FAMILIA: teve um queda ao longo das decadas
       # Guerra: queda na ultima (2010) e continua caindo em 2020
-      # Animação, biografia e histpria: 
-      
-      
-      
-      
-      
-      
-      #6         Quais os generos com maior nota imdb por faixa etaria?   
-      
-      
-      view(imdb_decada)
-
-      
-      
-            
-      
-      
-#     CONCLUSÃO FINAL: 
+      # Animação, biografia e histpria: boas médias ao longo das décadas analisadas.Nas últimas três décadas notamos uma leve queda nas médias
+        
+    
+#     CONCLUSÃO : 
 #1.  Década 2000-2020: gêneros com maior nota imdb foram Biografia, Guerra, História, Animação e Música
 #2.  Década 2020: gênero com maior nota média foi Animação
 #3.  Dos gêneros mais lucrativos, Animação obteve maior média Imdb no perído de 2000-2020
@@ -1267,10 +1301,101 @@ imdb_genero_decada  <-   imdb_decada %>%
 #6.  Os gêneros ANIMAÇÃO, BIOGRAFIA, HISTORIA estão entre os 5 gêneros com maior média imdb em todas as décadas desde 1960. 
 #7.  O gênero animação desde 1930 está entre os 5 primeiros com maior nota imdb       
       
- 
 
+      
+  #Ao optar pelo genero de animação eu sinto necessidade de analisar um pouco mais esse genero. 
+      # Mas não vou ter mto tempo. Vou começar outro curso. rs
+       
+      # GENERO ANIMAÇÃO
+      
+     imdb_animacao <-  imdb_lucrodolar_purr %>%
+                          unnest(genero) %>% 
+                          filter(genero == "Animation")
+      view(imdb_animacao)
+      
+      #Duracao
+      imdb_animacao %>% 
+        summarise(mean(duracao))
+      
+      
+      #idioma
+      imdb_animacao %>% 
+        unnest(idioma) %>%
+        count(idioma) %>% 
+        arrange(desc(n))
+      
+      #producao
+      imdb_animacao %>% 
+        unnest(producao) %>%
+        count(producao) %>% 
+        arrange(desc(n))
+      
+      #lucrativo
+      imdb_animacao %>% 
+        group_by(producao) %>% 
+        summarise(media = mean(lucro_mi)) %>% 
+        arrange(desc(media)) %>% 
+        slice_max(n=10, order_by = media, with_ties = TRUE) %>% 
+        view()
+      # 1
+      # Illumination Entertainment
+      # 1020.1213
+      # 2
+      # Dentsu
+      # 559.1549
+      # 3
+      # Pixar Animation Studios
+      # 500.2387
+      
+      
+      #roteiristas - lucro
+    teste1 <- imdb_animacao %>% 
+        unnest(roteiro) %>% 
+        group_by(roteiro) %>%
+        summarise(media = mean(lucro_mi)) %>% 
+        arrange(desc(media))  
+        
+      #roteirista - fama
+    teste2 <-   imdb_animacao %>% 
+        unnest(roteiro) %>% 
+        group_by(roteiro) %>% 
+        summarise(media = mean(nota_imdb)) %>% 
+        arrange(desc(media))  
+        
+     #join
+    roteiro <- inner_join(teste1, teste2, by = "roteiro") 
+    roteiro %>% 
+      slice_max(order_by = media.x, n=3) %>% 
+      select(roteiro, media.x)
+      
+   
+      
+    
+      #diretores
+      imdb_animacao %>% 
+        unnest(direcao) %>% 
+        group_by(direcao) %>% 
+        summarise(media = mean(lucro_mi)) %>% 
+        arrange(desc(media)) %>% 
+        slice_max(n=10, order_by = media, with_ties = TRUE)
+      
+   
+      
+# Conclusao
+      # Duracao: 90 min - 1,5h
+      # Idioma Inglês
+      # Producao mais realizado: 1 Walt Disney Pictures               31
+      #                          2 DreamWorks Animation               28
+      #                          3 Walt Disney Animation Studios      22
+      
+      #
+      
+      
+      ### --------------
+      
+      # CONCLUSÃO GERAL
  
- 
+      # No relatório
  
 
  
