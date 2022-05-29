@@ -1,5 +1,5 @@
 ---
-title: "Qual filme produzir?"
+title: "Qual gênero de filme produzir?"
 author: "Natália Freitas"
 date: "Maio 2022"
 output:
@@ -424,6 +424,7 @@ duracao <- imdb_lucrodolar %>%
           arrange(desc(lucro_mi)) %>% 
           slice_max(n=20, order_by = lucro_mi, with_ties = TRUE) %>% 
           summarise(media = mean(duracao))
+duracao <- round(duracao)
           
 ```
 
@@ -434,6 +435,7 @@ A média de duração dos 20 filmes mais lucrativos foi de `r duracao` minutos.
 ```{r echo = FALSE, message=FALSE, warning=FALSE, include=FALSE}
 correl <- cor.test(imdb_lucrodolar$lucro_mi, imdb_lucrodolar$nota_imdb, method="spearman")
 correlacao <- correl$estimate
+correlacao <- round(correlacao)
 ```
 
 O lucro do filme tem relação com a nota IMDb recebida pelos telespectadores? A resposta é "Muito pouco". Existe um correlação baixa entre o lucro e a nota IMDb (`r correlacao`). Isso significa que um filme lucrativo não necessariamente teve uma boa avaliação no IMDb.
